@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 反馈管理</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==1){window.location.href='../../index.html';}}());</script>
+    <style>
+        /* 整体双栏布局 */
+        .feedback-layout{display:flex;height:calc(100vh - 64px);gap:0;overflow:hidden}
+
+        /* 左侧反馈列表 */
+        .fb-list-pane{width:320px;min-width:280px;background:#fff;border-right:1px solid #e7edf6;display:flex;flex-direction:column;flex-shrink:0}
+        .fb-list-header{padding:12px 16px;border-bottom:1px solid #e7edf6;display:flex;justify-content:space-between;align-items:center;gap:8px}
+        .fb-list-header h3{margin:0;font-size:15px;font-weight:700;white-space:nowrap}
+        .fb-list-search{padding:8px 12px;border-bottom:1px solid #e7edf6}
+        .fb-list-search input{width:100%;padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box}
+        .fb-list-search input:focus{border-color:#3b82f6}
+        .fb-items{flex:1;overflow-y:auto}
+        .fb-item{padding:12px 16px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .15s}
+        .fb-item:hover{background:#f9fafb}
+        .fb-item.active{background:#eff6ff;border-left:3px solid #2563eb}
+        .fb-item-title{font-weight:600;font-size:14px;color:#111827;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .fb-item-meta{font-size:12px;color:#6b7280;margin-bottom:4px}
+        .fb-item-preview{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+        .fb-status{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+        .s-unread{background:#fee2e2;color:#dc2626}
+        .s-replied{background:#dbeafe;color:#2563eb}
+        .s-closed{background:#f3f4f6;color:#9ca3af}
+        .fb-empty{text-align:center;padding:40px 16px;color:#9ca3af;font-size:13px}
+        .fb-loading{text-align:center;padding:30px;color:#9ca3af;font-size:13px}
+
+        /* 右侧对话区 */
+        .fb-chat-pane{flex:1;display:flex;flex-direction:column;background:#f9fafb;overflow:hidden}
+        .chat-header{padding:12px 20px;background:#fff;border-bottom:1px solid #e7edf6;display:flex;justify-content:space-between;align-items:center}
+        .chat-header-title{font-weight:700;font-size:15px;color:#111827}
+        .chat-header-meta{font-size:12px;color:#6b7280;margin-top:2px}
+        .chat-header-actions{display:flex;gap:8px}
+        .chat-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+        .chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-size:14px}
+        .chat-empty i{font-size:48px;color:#e5e7eb;margin-bottom:16px}
+        /* 消息气泡 */
+        .msg{max-width:72%;display:flex;flex-direction:column}
+        .msg-user{align-self:flex-start}
+        .msg-staff{align-self:flex-end}
+        .msg-hdr{font-size:12px;margin-bottom:4px}
+        .msg-user .msg-hdr{color:#6b7280}
+        .msg-staff .msg-hdr{color:#2563eb;text-align:right}
+        .msg-bubble{padding:10px 14px;border-radius:10px;line-height:1.5;font-size:14px;word-break:break-word}
+        .msg-user .msg-bubble{background:#fff;border:1px solid #e5e7eb;border-bottom-left-radius:3px}
+        .msg-staff .msg-bubble{background:#2563eb;color:#fff;border-bottom-right-radius:3px}
+        .msg-time{font-size:11px;color:#9ca3af;margin-top:4px}
+        .msg-staff .msg-time{text-align:right}
+        /* 回复区 */
+        .chat-reply{padding:16px 20px;background:#fff;border-top:1px solid #e7edf6}
+        .reply-row{display:flex;gap:10px;align-items:flex-end}
+        .reply-input{flex:1;padding:10px 14px;border:1px solid #d1d5db;border-radius:10px;resize:none;height:76px;font-size:14px;line-height:1.5;outline:none;font-family:inherit}
+        .reply-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+        .reply-input:disabled{background:#f9fafb;color:#9ca3af}
+        .reply-btns{display:flex;flex-direction:column;gap:8px}
+        .btn-send{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap}
+        .btn-send:hover{background:#1d4ed8}
+        .btn-send:disabled{opacity:.5;cursor:not-allowed}
+        .btn-clear{background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px}
+        .btn-clear:hover{background:#e5e7eb}
+        /* 分页 */
+        .fb-pagination{padding:10px 16px;border-top:1px solid #e7edf6;display:flex;justify-content:center;gap:4px}
+        .pg-btn{min-width:30px;height:30px;padding:0 6px;border-radius:6px;border:1px solid #e5eaf3;background:#fff;cursor:pointer;font-size:12px}
+        .pg-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+        .pg-btn:disabled{opacity:.5;cursor:not-allowed}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店员端</div>
+        </div>
+        <div class="nav">
+            <a href="staff_console.html" class="nav-item"><i class="fas fa-tachometer-alt nav-ico"></i><span class="nav-text">控制台首页</span></a>
+            <a href="product_manager.html" class="nav-item"><i class="fas fa-box nav-ico"></i><span class="nav-text">商品管理</span></a>
+            <a href="inventory_manager.html" class="nav-item"><i class="fas fa-warehouse nav-ico"></i><span class="nav-text">库存管理</span></a>
+            <a href="order_manager.html" class="nav-item"><i class="fas fa-shopping-cart nav-ico"></i><span class="nav-text">订单管理</span></a>
+            <a href="feedback_manager.html" class="nav-item active"><i class="fas fa-comments nav-ico"></i><span class="nav-text">反馈管理</span></a>
+        </div>
+    </div>
+
+    <div class="main" style="display:flex;flex-direction:column;">
+        <div class="topbar">
+            <h1 class="page-title">反馈管理</h1>
+            <div class="topbar-right">
+                <a href="staff_profile.html" class="user-info" style="text-decoration:none;color:inherit;cursor:pointer;" title="个人信息">
+                    <span id="adminName" style="margin-right:10px;font-size:14px;">员工</span>
+                    <img id="adminAvatar" src="../../images/avatar/default.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+
+        <div class="feedback-layout">
+            <!-- 左侧列表 -->
+            <div class="fb-list-pane">
+                <div class="fb-list-header">
+                    <h3>用户反馈</h3>
+                    <select id="filterStatus" style="padding:4px 8px;border-radius:6px;border:1px solid #d1d5db;font-size:12px;outline:none;">
+                        <option value="">全部</option>
+                        <option value="0">未回复</option>
+                        <option value="1">已回复</option>
+                        <option value="2">已关闭</option>
+                    </select>
+                </div>
+                <div class="fb-list-search">
+                    <input type="text" id="searchInput" placeholder="搜索标题或内容...">
+                </div>
+                <div class="fb-items" id="fbItems">
+                    <div class="fb-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>
+                </div>
+                <div class="fb-pagination" id="fbPagination"></div>
+            </div>
+
+            <!-- 右侧对话区 -->
+            <div class="fb-chat-pane">
+                <div class="chat-header" id="chatHeader" style="display:none;">
+                    <div>
+                        <div class="chat-header-title" id="chatTitle">-</div>
+                        <div class="chat-header-meta" id="chatMeta">-</div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="btn btn-edit" id="btnMarkRead" style="height:32px;padding:0 12px;font-size:12px;">标记已读</button>
+                        <button class="btn btn-del" id="btnClose" style="height:32px;padding:0 12px;font-size:12px;">关闭反馈</button>
+                    </div>
+                </div>
+
+                <div class="chat-body" id="chatBody">
+                    <div class="chat-empty">
+                        <i class="fas fa-comments"></i>
+                        <div>选择左侧反馈查看对话</div>
+                    </div>
+                </div>
+
+                <div class="chat-reply" id="chatReply" style="display:none;">
+                    <div class="reply-row">
+                        <textarea class="reply-input" id="replyInput" placeholder="输入回复内容..."></textarea>
+                        <div class="reply-btns">
+                            <button class="btn-send" id="btnSend"><i class="fas fa-paper-plane"></i> 发送</button>
+                            <button class="btn-clear" id="btnClearReply">清空</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/jquery-3.7.1.min.js"></script>
+<script>
+var loginUser = {};
+try { loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}'); } catch(e) {}
+var TOKEN = loginUser.token || '';
+var curFbPage = 1, totalFbPages = 1;
+var activeFbId = null;
+var activeStatus = null; // 当前选中反馈的状态
+
+function H() { return { 'Authorization': 'Bearer ' + TOKEN }; }
+function HJ() { return Object.assign(H(), {'Content-Type':'application/json'}); }
+
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtTime(t) {
+    if (!t) return '-';
+    return new Date(t).toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+}
+
+// ---------- 用户信息 ----------
+function loadUserInfo() {
+    $('#adminName').text(loginUser.username || '员工');
+    var av = loginUser.avatar || '';
+    if (av.startsWith('./')) av = av.replace('./', '../../');
+    if (av) $('#adminAvatar').attr('src', av);
+}
+
+// ---------- 状态标签 ----------
+function statusBadge(st) {
+    if (st === 0) return '<span class="fb-status s-unread">未回复</span>';
+    if (st === 1) return '<span class="fb-status s-replied">已回复</span>';
+    if (st === 2) return '<span class="fb-status s-closed">已关闭</span>';
+    return '';
+}
+
+// ---------- 加载反馈列表 ----------
+function loadFeedbackList(page) {
+    curFbPage = page || 1;
+    var params = { pageNum: curFbPage, pageSize: 12 };
+    var st = $('#filterStatus').val();
+    var kw = $.trim($('#searchInput').val());
+    if (st !== '') params.status = st;
+    if (kw) params.keyword = kw;
+
+    $('#fbItems').html('<div class="fb-loading"><i class="fas fa-spinner fa-spin"></i> 加载中...</div>');
+
+    $.ajax({
+        url: '/api/v1/feedback/list', type: 'GET', headers: H(), data: params,
+        success: function(r) {
+            if (r.code !== 200) { $('#fbItems').html('<div class="fb-empty">加载失败：'+esc(r.msg)+'</div>'); return; }
+            var recs = r.data.records || [];
+            totalFbPages = r.data.pages || 1;
+            renderFbList(recs, r.data.total || 0);
+            renderFbPage(r.data.total || 0);
+        },
+        error: function() { $('#fbItems').html('<div class="fb-empty">网络错误，请重试</div>'); }
+    });
+}
+
+function renderFbList(recs, total) {
+    if (!recs.length) {
+        $('#fbItems').html('<div class="fb-empty"><i class="fas fa-inbox" style="font-size:32px;margin-bottom:8px;"></i><br>暂无反馈数据</div>');
+        return;
+    }
+    var h = '';
+    recs.forEach(function(fb) {
+        var isActive = fb.feedbackId === activeFbId ? ' active' : '';
+        h += '<div class="fb-item'+isActive+'" data-id="'+fb.feedbackId+'">' +
+            '<div class="fb-item-title">'+esc(fb.title||'(无标题)')+'</div>'+
+            '<div class="fb-item-meta">'+esc(fb.username||'匿名')+'&nbsp;·&nbsp;'+fmtTime(fb.createTime)+'</div>'+
+            '<div class="fb-item-preview">'+esc((fb.content||'').substring(0,40))+'</div>'+
+            statusBadge(fb.status)+
+            '</div>';
+    });
+    $('#fbItems').html(h);
+}
+
+function renderFbPage(total) {
+    var $p = $('#fbPagination');
+    if (totalFbPages <= 1) { $p.html(''); return; }
+    var h = '';
+    h += '<button class="pg-btn" id="fbPrev"'+(curFbPage<=1?' disabled':'')+'>‹</button>';
+    var s=Math.max(1,curFbPage-2), e=Math.min(totalFbPages,s+4);
+    if(e-s<4) s=Math.max(1,e-4);
+    for(var i=s;i<=e;i++) h+='<button class="pg-btn'+(i===curFbPage?' active':'')+'" data-p="'+i+'">'+i+'</button>';
+    h+='<button class="pg-btn" id="fbNext"'+(curFbPage>=totalFbPages?' disabled':'')+'>›</button>';
+    $p.html(h);
+}
+
+// ---------- 加载反馈详情 ----------
+function loadFeedbackDetail(feedbackId) {
+    activeFbId = feedbackId;
+    // 高亮选中项
+    $('.fb-item').removeClass('active');
+    $('.fb-item[data-id="'+feedbackId+'"]').addClass('active');
+
+    $('#chatBody').html('<div class="chat-empty"><i class="fas fa-spinner fa-spin" style="font-size:24px;"></i></div>');
+
+    $.ajax({
+        url: '/api/v1/feedback/detail/' + feedbackId, type:'GET', headers:H(),
+        success: function(r) {
+            if (r.code !== 200) { $('#chatBody').html('<div class="chat-empty">'+esc(r.msg)+'</div>'); return; }
+            var fb = r.data.feedback;
+            var replies = r.data.replies || [];
+            activeStatus = fb.status;
+
+            // 更新头部
+            $('#chatTitle').text(fb.title || '(无标题)');
+            $('#chatMeta').text('来自：'+(fb.username||'匿名')+' · '+fmtTime(fb.createTime)+' · '+['未回复','已回复','已关闭'][fb.status]);
+            $('#chatHeader').show();
+
+            // 根据状态显示/隐藏回复区
+            if (fb.status === 2) {
+                $('#chatReply').hide();
+            } else {
+                $('#chatReply').show();
+                $('#replyInput').prop('disabled', false);
+                $('#btnSend').prop('disabled', false);
+            }
+
+            // 更新关闭/标记按钮
+            if (fb.status === 2) {
+                $('#btnClose').hide();
+                $('#btnMarkRead').hide();
+            } else {
+                $('#btnClose').show();
+                $('#btnMarkRead').show().text(fb.status === 0 ? '标记已回复' : '标记已读');
+            }
+
+            // 构建聊天记录
+            var h = '';
+            // 用户初始消息
+            h += '<div class="msg msg-user">' +
+                '<div class="msg-hdr">'+esc(fb.username||'匿名用户')+'（用户）</div>' +
+                '<div class="msg-bubble">'+esc(fb.content||'')+'</div>' +
+                '<div class="msg-time">'+fmtTime(fb.createTime)+'</div>' +
+                '</div>';
+
+            replies.forEach(function(rep) {
+                var isStaff = true; // 所有reply都是店员/店主回复
+                h += '<div class="msg msg-staff">' +
+                    '<div class="msg-hdr">'+esc(rep.replyUsername||'客服')+'（店员）</div>' +
+                    '<div class="msg-bubble">'+esc(rep.content||'')+'</div>' +
+                    '<div class="msg-time">'+fmtTime(rep.createTime)+'</div>' +
+                    '</div>';
+            });
+            $('#chatBody').html(h);
+            // 滚动到底部
+            var $cb = $('#chatBody');
+            $cb.scrollTop($cb[0].scrollHeight);
+        },
+        error: function() { $('#chatBody').html('<div class="chat-empty">加载失败，请重试</div>'); }
+    });
+}
+
+// ---------- 发送回复 ----------
+function sendReply() {
+    var content = $.trim($('#replyInput').val());
+    if (!content) { alert('请输入回复内容'); return; }
+    if (!activeFbId) return;
+
+    $('#btnSend').prop('disabled', true).text('发送中...');
+    $.ajax({
+        url: '/api/v1/feedback/reply', type:'POST', headers:HJ(),
+        data: JSON.stringify({ feedbackId: activeFbId, replyUserId: loginUser.userId||null, content: content }),
+        success: function(r) {
+            $('#btnSend').prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发送');
+            if (r.code === 200) {
+                $('#replyInput').val('');
+                loadFeedbackDetail(activeFbId);
+                // 刷新列表（状态已更新为已回复）
+                loadFeedbackList(curFbPage);
+            } else {
+                alert('发送失败：'+r.msg);
+            }
+        },
+        error: function(){
+            $('#btnSend').prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 发送');
+            alert('网络错误，请重试');
+        }
+    });
+}
+
+// ---------- 关闭/标记 ----------
+function updateStatus(fbId, status) {
+    $.ajax({
+        url: '/api/v1/feedback/status/'+fbId, type:'PUT', headers:H(),
+        data: { status: status },
+        success: function(r) {
+            if (r.code === 200) {
+                loadFeedbackDetail(fbId);
+                loadFeedbackList(curFbPage);
+            } else {
+                alert(r.msg);
+            }
+        }
+    });
+}
+
+// ---------- 事件绑定 ----------
+$(function() {
+    loadUserInfo();
+    loadFeedbackList(1);
+
+    // 搜索/筛选
+    $('#searchInput').on('keypress', function(e){ if(e.which===13) loadFeedbackList(1); });
+    $('#filterStatus').change(function(){ loadFeedbackList(1); });
+
+    // 点击反馈项
+    $('#fbItems').on('click', '.fb-item', function() {
+        loadFeedbackDetail(parseInt($(this).data('id')));
+    });
+
+    // 列表分页
+    $('#fbPagination').on('click', '.pg-btn', function() {
+        if($(this).prop('disabled')) return;
+        var id=$(this).attr('id');
+        if(id==='fbPrev') loadFeedbackList(curFbPage-1);
+        else if(id==='fbNext') loadFeedbackList(curFbPage+1);
+        else loadFeedbackList(parseInt($(this).data('p')));
+    });
+
+    // 回复
+    $('#btnSend').click(sendReply);
+    $('#btnClearReply').click(function(){ $('#replyInput').val(''); });
+    $('#replyInput').on('keydown', function(e) {
+        // Ctrl+Enter 快捷发送
+        if (e.ctrlKey && e.which === 13) sendReply();
+    });
+
+    // 标记已回复
+    $('#btnMarkRead').click(function() {
+        if (!activeFbId) return;
+        updateStatus(activeFbId, 1);
+    });
+
+    // 关闭反馈
+    $('#btnClose').click(function() {
+        if (!activeFbId) return;
+        if (confirm('确认关闭该反馈？关闭后将无法继续回复')) {
+            updateStatus(activeFbId, 2);
+        }
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 首页</title>
+    <link rel="icon" href="images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/Swiper/8.4.7/swiper-bundle.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/jquery-3.7.1.min.js"></script>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo">五金产品销售管理系统</div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">首页</a></li>
+                <li><a href="category.html">分类</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="search-box">
+                    <input type="text" placeholder="搜索商品名称、规格或分类...">
+                    <button>搜索</button>
+                </div>
+                <span id="userNameDisplay" style="color: #333; font-size: 14px; font-weight: bold; margin-right: 10px; display: none; align-items: center" >用户名</span>
+                <div class="user-op">
+                    <!-- 登录状态显示 -->
+                    <div class="avatar-container" id="userAvatar" style="display: none;">
+                        <img src="images/avatar/default.png" alt="用户头像" class="avatar-img">
+                    </div>
+                    <!-- 未登录状态显示 -->
+                    <div id="loginRegisterBtns">
+                        <a href="javascript:" id="loginTrigger" class="login-trigger-btn"><span class="icon">👤</span>登录</a>
+                        <a href="javascript:" id="registTrigger"><span class="icon">📝</span>注册</a>
+                    </div>
+                    <a href="javascript:" id="favorTrigger" class="login-trigger-btn"><span class="icon">❤️</span>收藏</a>
+                    <a href="javascript:" id="cartTrigger" class="login-trigger-btn"><span class="icon">🛒</span>购物车</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- 轮播图 -->
+<div class="container">
+    <div class="parallax-swiper swiper">
+
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('images/basic/carousel/001.png')" data-swiper-parallax="-23%"></div>
+            </div>
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('images/basic/carousel/002.png')" data-swiper-parallax="-23%"></div>
+            </div>
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('images/basic/carousel/003.png')" data-swiper-parallax="-23%"></div>
+            </div>
+        </div>
+        <div class="swiper-pagination"></div>
+    </div>
+</div>
+
+<!-- 热销商品推荐 -->
+<div class="container">
+    <section class="hot-products">
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <h3>热销商品推荐</h3>
+            <span style="font-size:13px;color:#888;">按近期购买量排序</span>
+        </div>
+        <div class="product-list" id="hotProductList">
+            <div style="text-align:center;padding:40px 0;color:#aaa;grid-column:1/-1;">加载中...</div>
+        </div>
+    </section>
+</div>
+
+<!-- 特价商品 -->
+<div class="container">
+    <section class="promotion">
+        <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <h3>特价商品</h3>
+            <span style="font-size:13px;color:#888;">低价优选</span>
+        </div>
+        <div class="product-list" id="cheapProductList">
+            <div style="text-align:center;padding:40px 0;color:#aaa;grid-column:1/-1;">加载中...</div>
+        </div>
+    </section>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4>关于我们</h4>
+                <p>五金产品销售管理系统是一款面向五金行业的全流程商品管理平台，实现从商品上架、库存管控、销售管理到用户维护、数据统计的一体化功能，同时满足系统在界面友好性、操作便捷性与数据安全性方面的非功能需求，为五金企业店主、店员及消费者提供专业、高效的数字化服务，助力企业优化运营流程、降低管理成本、精准把握市场动态，推动五金行业数字化转型进程。</p>
+            </div>
+            <div class="footer-contact">
+                <h4>联系我们</h4>
+                <p>客服电话：123-456-7890</p>
+                <p>工作时间：周一至周日 9:00-21:00</p>
+                <p>联系地址：火星</p>
+                <p>邮箱：service@wujin.com</p>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2025 五金产品销售管理系统
+        </div>
+    </div>
+</footer>
+
+<!-- 登录弹窗 -->
+<div class="modal-mask" id="loginModal">
+    <div class="modal-container">
+        <button class="modal-close" id="loginClose">×</button>
+        <form class="login_form" id="loginForm">
+            <div class="login-title">用户登录</div>
+            <!-- 用户名输入 -->
+            <div class="list-item" id="usernameItem">
+                <div class="lable">账号：</div>
+                <input type="text" id="username" placeholder="请输入账号">
+            </div>
+            <!-- 密码输入 -->
+            <div class="list-item" id="passwordItem">
+                <div class="lable">密码：</div>
+                <div class="password-box">
+                    <input type="password" id="password" placeholder="请输入密码">
+                    <button type="button" id="togglePassword" class="toggle-password">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- 消息提示 -->
+            <div id="loginMessage" class="message"></div>
+            <!-- 按钮区域 -->
+            <div class="list-btn">
+                <button type="button" class="login_btn" id="loginBtn">登录</button>
+                <button type="button" class="login_btn" id="toRegistBtn">注册</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 注册弹窗 -->
+<div class="modal-mask" id="registModal">
+    <div class="modal-container">
+        <button class="modal-close" id="registClose">×</button>
+        <form class="register_form" id="registForm">
+            <div class="register-title">用户注册</div>
+            <!-- 消息提示 -->
+            <div id="registMessage" class="message"></div>
+            <!-- 用户名 -->
+            <div class="form-group">
+                <label for="registUsername">用户名：</label>
+                <input type="text" id="registUsername" placeholder="请输入用户名">
+            </div>
+            <!-- 密码 -->
+            <div class="form-group">
+                <label for="registPassword">密码：</label>
+                <div class="password-box">
+                    <input type="password" id="registPassword" placeholder="请输入至少6位密码">
+                    <button type="button" id="toggleRegistPassword" class="toggle-password">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- 手机号 -->
+            <div class="form-group">
+                <label for="registPhone">手机号：</label>
+                <input type="text" id="registPhone" placeholder="请输入11位手机号">
+            </div>
+            <!-- 真实姓名（可选） -->
+            <div class="form-group">
+                <label for="registRealName">真实姓名（可选）：</label>
+                <input type="text" id="registRealName" placeholder="请输入真实姓名">
+            </div>
+            <!-- 按钮区域 -->
+            <div class="btn-group">
+                <button type="button" class="register_btn" id="doRegistBtn">提交注册</button>
+                <button type="button" class="back_btn" id="backToLoginBtn">返回登录</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="js/swiper-bundle.min.js"></script>
+<script>
+    // 初始化轮播图
+    const swiper = new Swiper('.parallax-swiper', {
+        speed: 600,
+        parallax: true,
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+        },
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        },
+        loop: true,
+    });
+
+    // ===== 加载热销商品 =====
+    function resolvePublicImg(url) {
+        if (!url) return 'images/avatar/default.png';
+        if (url.startsWith('/images/')) return url.replace('/images/', 'images/');
+        if (url.startsWith('./images/')) return url.replace('./', '');
+        return url;
+    }
+
+    function renderPublicCards(containerId, records) {
+        if (!records || !records.length) {
+            $('#' + containerId).html('<div style="text-align:center;padding:40px 0;color:#aaa;grid-column:1/-1;">暂无商品数据</div>');
+            return;
+        }
+        let html = '';
+        records.forEach(function(p) {
+            const price = p.minPrice != null ? '¥' + parseFloat(p.minPrice).toFixed(2) : '价格待定';
+            const unit = p.unit ? '/' + p.unit : '';
+            const noStock = !p.totalStock || p.totalStock <= 0;
+            const imgSrc = resolvePublicImg(p.mainImage);
+            const brand = (p.brand || p.model) ? ((p.brand || '') + (p.model ? ' ' + p.model : '')) : '';
+            let stockHtml = noStock
+                ? '<span class="stock-out">已售罄</span>'
+                : (p.totalStock <= 50 ? '<span class="stock-low">库存紧张</span>' : '<span class="stock-high">库存充足</span>');
+            html += '<div class="product-card">'
+                + '<img src="' + imgSrc + '" alt="' + p.productName + '" class="product-img" onerror="this.src=\'images/avatar/default.png\'">'
+                + '<div class="product-info">'
+                + '<h4 class="product-name" title="' + p.productName + '">' + p.productName + '</h4>'
+                + (brand ? '<p class="product-spec">' + brand + '</p>' : '')
+                + '<div class="product-price">' + price + '<span style="font-size:12px;color:#999;">' + unit + '</span></div>'
+                + '<p class="product-stock">库存状态：' + stockHtml + '</p>'
+                + '<button class="add-cart" onclick="$(\'#loginModal\').css(\'display\',\'flex\')">'
+                + (noStock ? '暂时缺货' : '登录后购买') + '</button>'
+                + '</div></div>';
+        });
+        $('#' + containerId).html(html);
+    }
+
+    $.get('/api/v1/product/hot?limit=8', function(res) {
+        if (res.code === 200 && res.data) renderPublicCards('hotProductList', res.data);
+    }).fail(function() {
+        $('#hotProductList').html('<div style="text-align:center;padding:40px 0;color:#aaa;grid-column:1/-1;">暂无热销商品</div>');
+    });
+
+    $.get('/api/v1/product/list?isOnSale=1&pageSize=20&pageNum=1', function(res) {
+        if (res.code === 200 && res.data && res.data.records) {
+            const sorted = (res.data.records)
+                .filter(p => p.minPrice != null)
+                .sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice))
+                .slice(0, 4);
+            renderPublicCards('cheapProductList', sorted);
+        }
+    }).fail(function() {
+        $('#cheapProductList').html('<div style="text-align:center;padding:40px 0;color:#aaa;grid-column:1/-1;">暂无特价商品</div>');
+    });
+
+    // 弹窗相关逻辑
+    $(function() {
+        // 登录弹窗显示/隐藏
+        $(document).on('click', '.login-trigger-btn', () => {
+            $('#loginModal').css('display', 'flex');
+        });
+
+        $('#loginClose').click(() => {
+            $('#loginModal').css('display', 'none');
+        });
+
+        // 注册弹窗显示/隐藏
+        $('#registTrigger').click(() => $('#registModal').css('display', 'flex'));
+        $('#registClose').click(() => $('#registModal').css('display', 'none'));
+        // 登录页跳注册
+        $('#toRegistBtn').click(() => {
+            $('#loginModal').css('display', 'none');
+            $('#registModal').css('display', 'flex');
+        });
+        // 注册页返回登录
+        $('#backToLoginBtn').click(() => {
+            $('#registModal').css('display', 'none');
+            $('#loginModal').css('display', 'flex');
+        });
+
+        // 密码显示/隐藏切换
+        $('#togglePassword').on('click', function () {
+            const $pwd = $('#password');
+            const type = $pwd.attr('type') === 'password' ? 'text' : 'password';
+            $pwd.attr('type', type);
+            $(this).html(type === 'password' ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>');
+        });
+
+        // 注册密码显示/隐藏切换
+        $('#toggleRegistPassword').on('click', function () {
+            const $registPwd = $('#registPassword');
+            const type = $registPwd.attr('type') === 'password' ? 'text' : 'password';
+            $registPwd.attr('type', type);
+            $(this).html(type === 'password' ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>');
+        });
+
+        // 加载用户信息并更新导航栏
+        function loadUserInfo() {
+            // 从localStorage读取登录用户信息
+            const loginUserStr = localStorage.getItem('loginUser');
+            if (!loginUserStr) {
+                // 无登录信息，显示登录注册按钮
+                $('#loginRegisterBtns').show();
+                $('#userAvatar').hide();
+                $('#userNameDisplay').hide();
+                return;
+            }
+
+            try {
+                const loginUser = JSON.parse(loginUserStr);
+                const userId = loginUser.userId;
+                if (!userId) {
+                    $('#loginRegisterBtns').show();
+                    $('#userAvatar').hide();
+                    $('#userNameDisplay').hide();
+                    return;
+                }
+
+                // 调用后端接口获取用户信息（含用户名、头像）
+                $.ajax({
+                    url: `/user/info/${userId}`,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.code === 200 && res.data) {
+                            // 隐藏登录注册按钮，显示用户信息
+                            $('#loginRegisterBtns').hide();
+                            $('#userAvatar').show();
+                            $('#userNameDisplay').show();
+                            
+                            // 更新头像
+                            const avatarImg = document.querySelector('#userAvatar .avatar-img');
+                            if (avatarImg) {
+                                // 处理相对路径，拼接正确的图片地址
+                                const avatarUrl = res.data.avatar ? 
+                                    (res.data.avatar.startsWith('.') ? res.data.avatar.replace('./', 'images/') : res.data.avatar) : 
+                                    'images/avatar/default.png';
+                                avatarImg.src = avatarUrl;
+                            }
+                            // 更新用户名显示
+                            const userNameDisplay = document.getElementById('userNameDisplay');
+                            if (userNameDisplay) {
+                                userNameDisplay.textContent = res.data.username;
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('获取用户信息失败：', xhr.responseJSON?.msg || '接口请求异常');
+                        // 失败后显示登录注册按钮
+                        $('#loginRegisterBtns').show();
+                        $('#userAvatar').hide();
+                        $('#userNameDisplay').hide();
+                    }
+                });
+            } catch (e) {
+                console.error('解析用户信息失败：', e);
+                $('#loginRegisterBtns').show();
+                $('#userAvatar').hide();
+                $('#userNameDisplay').hide();
+            }
+        }
+
+        // 登录逻辑
+        let isLoginSubmitting = false;
+        $('#loginBtn').click(function() {
+            if (isLoginSubmitting) return;
+            const username = $('#username').val().trim();
+            const password = $('#password').val().trim();
+            const $message = $('#loginMessage');
+            $message.hide().removeClass('error success green');
+
+            // 前端校验
+            if (!username) {
+                $message.text('请输入账号').addClass('error').show();
+                setTimeout(() => $message.hide(), 3000);
+                return;
+            }
+            if (!password) {
+                $message.text('请输入密码').addClass('error').show();
+                setTimeout(() => $message.hide(), 3000);
+                return;
+            }
+
+            // 发起登录请求
+            isLoginSubmitting = true;
+            $(this).text('登录中...');
+            $.ajax({
+                url: '/user/login',
+                type: 'POST',
+                data: JSON.stringify({username, password}),
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code === 200) {
+                        localStorage.setItem('loginUser', JSON.stringify(res.data));
+                        
+                        // 检查用户角色（用 ?? 避免 0 被误判为 falsy）
+                        const roleId = res.data.roleId ?? 2;
+                        
+                        if (roleId === 2) {
+                            // 消费者登录，跳转到消费者中心
+                            $message.text(`${res.msg}，即将跳转到消费者中心...`).addClass('success green').show();
+                            setTimeout(function () {
+                                window.location.href = "pages/consumer/consumer_index.html";
+                            }, 1000);
+                        } else {
+                            // 管理者登录，跳转到控制台
+                            $message.text(`${res.msg}，即将跳转到控制台`).addClass('success green').show();
+                            setTimeout(function () {
+                                if (roleId === 0) {
+                                    window.location.href = "pages/owner/owner_console.html";
+                                } else if (roleId === 1) {
+                                    window.location.href = "pages/staff/staff_console.html";
+                                }
+                            }, 1500);
+                        }
+                    } else {
+                        $message.text(res.msg).addClass('error').show();
+                        setTimeout(() => $message.hide(), 3000);
+                    }
+                },
+                error: function (xhr) {
+                    const errMsg = xhr.responseJSON?.msg || '服务器错误，请稍后再试';
+                    $message.text(errMsg).addClass('error').show();
+                    setTimeout(() => $message.hide(), 3000);
+                },
+                complete: function () {
+                    isLoginSubmitting = false;
+                    $('#loginBtn').text('登录');
+                }
+            });
+        });
+
+        // 注册逻辑
+        let isRegistSubmitting = false;
+        $('#doRegistBtn').click(function() {
+            if (isRegistSubmitting) return;
+            const username = $('#registUsername').val().trim();
+            const password = $('#registPassword').val().trim();
+            const phone = $('#registPhone').val().trim();
+            const realName = $('#registRealName').val().trim();
+            const $message = $('#registMessage');
+            $message.hide().removeClass('error success');
+
+            // 前端校验
+            if (!username) {
+                $message.text('用户名不能为空').addClass('error').show();
+                setTimeout(() => $message.hide(), 3000);
+                return;
+            }
+            if (!password || password.length < 6) {
+                $message.text('密码不能为空且至少6位').addClass('error').show();
+                setTimeout(() => $message.hide(), 3000);
+                return;
+            }
+            const phoneReg = /^1[3-9]\d{9}$/;
+            if (!phone || !phoneReg.test(phone)) {
+                $message.text('手机号格式不正确（需11位有效数字）').addClass('error').show();
+                setTimeout(() => $message.hide(), 3000);
+                return;
+            }
+
+            // 发起注册请求
+            isRegistSubmitting = true;
+            $(this).text('注册中...');
+            $.ajax({
+                url: '/user/regist',
+                type: 'POST',
+                data: JSON.stringify({
+                    username,
+                    password,
+                    phone,
+                    realName: realName || null
+                }),
+                contentType: 'application/json;charset=utf-8',
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code === 200) {
+                        $message.text(`${res.msg}，即将返回登录页`).addClass('success').show();
+                        setTimeout(function () {
+                            $('#registModal').css('display', 'none');
+                            $('#loginModal').css('display', 'flex');
+                            // 清空注册表单
+                            $('#registForm')[0].reset();
+                        }, 1500);
+                    } else {
+                        $message.text(res.msg).addClass('error').show();
+                        setTimeout(() => $message.hide(), 3000);
+                    }
+                },
+                error: function (xhr) {
+                    const errMsg = xhr.responseJSON?.msg || '服务器错误，请稍后再试';
+                    $message.text(errMsg).addClass('error').show();
+                    setTimeout(() => $message.hide(), 3000);
+                },
+                complete: function () {
+                    isRegistSubmitting = false;
+                    $('#doRegistBtn').text('提交注册');
+                }
+            });
+        });
+
+        // 点击遮罩层关闭弹窗
+        $('.modal-mask').click(function(e) {
+            if (e.target === this) {
+                $(this).css('display', 'none');
+            }
+        });
+
+        // 页面加载时检测登录状态
+        loadUserInfo();
+    });
+</script>
+</body>
+</html>

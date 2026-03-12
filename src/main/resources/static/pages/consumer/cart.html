@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - 五金产品销售管理系统</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/index.css">
+    <script src="../../js/jquery-3.7.1.min.js"></script>
+    <style>
+        html, body { height: 100%; }
+        body { background: #f5f5f5; display: flex; flex-direction: column; min-height: 100vh; }
+        .header { flex-shrink: 0; border-bottom: 2px solid #c00; background: #fff; position: sticky; top: 0; z-index: 999; }
+        .nav { display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .logo { font-size: 22px; color: #c00; font-weight: bold; cursor: pointer; }
+        .back-link { font-size: 14px; color: #666; text-decoration: none; }
+        .back-link:hover { color: #c00; }
+
+        /* 主体 */
+        .cart-page { flex: 1; padding: 24px 0 40px; }
+        .page-title { font-size: 20px; font-weight: bold; color: #222; margin-bottom: 20px; }
+
+        /* 购物车表格 */
+        .cart-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.07); overflow: hidden; margin-bottom: 16px; }
+        .cart-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .cart-table th { background: #fafafa; padding: 12px 16px; text-align: left; color: #666; font-weight: 500; border-bottom: 1px solid #eee; }
+        .cart-table td { padding: 14px 16px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; color: #333; }
+        .cart-table tr:last-child td { border-bottom: none; }
+        .cart-table tr:hover td { background: #fffbfb; }
+
+        .item-name { font-weight: 600; color: #222; margin-bottom: 4px; }
+        .item-spec { font-size: 12px; color: #999; }
+        .item-price { color: #c00; font-weight: 600; }
+
+        /* 数量控制 */
+        .qty-ctrl { display: flex; align-items: center; gap: 0; }
+        .qty-btn { width: 28px; height: 28px; border: 1px solid #ddd; background: #fafafa; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+        .qty-btn:hover { background: #fee; border-color: #c00; color: #c00; }
+        .qty-input { width: 48px; height: 28px; border: 1px solid #ddd; border-left: none; border-right: none; text-align: center; font-size: 14px; outline: none; }
+
+        /* 删除 */
+        .del-btn { background: none; border: none; color: #bbb; cursor: pointer; font-size: 18px; padding: 4px; }
+        .del-btn:hover { color: #c00; }
+
+        /* 结算栏 */
+        .checkout-bar {
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.07);
+            padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .bar-left { display: flex; align-items: center; gap: 20px; }
+        .select-all-wrap { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .select-all-wrap input { width: 16px; height: 16px; accent-color: #c00; cursor: pointer; }
+        .clear-cart-btn { font-size: 13px; color: #888; cursor: pointer; border: 1px solid #ddd; border-radius: 3px; padding: 4px 12px; background: #fff; }
+        .clear-cart-btn:hover { border-color: #c00; color: #c00; }
+        .bar-right { display: flex; align-items: center; gap: 20px; }
+        .total-info { font-size: 14px; color: #555; }
+        .total-price { font-size: 22px; color: #c00; font-weight: bold; }
+        .checkout-btn { padding: 10px 32px; background: #c00; color: #fff; border: none; border-radius: 4px; font-size: 15px; cursor: pointer; }
+        .checkout-btn:hover { background: #a00; }
+        .checkout-btn:disabled { background: #e8a0a0; cursor: not-allowed; }
+
+        /* 空购物车 */
+        .empty-cart { text-align: center; padding: 80px 20px; }
+        .empty-cart .empty-icon { font-size: 64px; color: #ddd; margin-bottom: 16px; }
+        .empty-cart p { color: #aaa; font-size: 15px; margin-bottom: 20px; }
+        .go-shop-btn { display: inline-block; padding: 10px 28px; background: #c00; color: #fff; border-radius: 4px; font-size: 14px; text-decoration: none; }
+        .go-shop-btn:hover { background: #a00; color: #fff; }
+
+        /* 勾选框 */
+        .item-check { width: 16px; height: 16px; accent-color: #c00; cursor: pointer; }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 22px; border-radius: 20px; font-size: 14px; z-index: 9999; display: none; }
+
+        /* 结算弹窗 */
+        .modal-mask { display: none; position: fixed; top:0;left:0;width:100%;height:100%; background:rgba(0,0,0,.5); z-index:1000; justify-content:center; align-items:center; }
+        .modal-mask.show { display: flex; }
+        .modal-box { background:#fff; border-radius:8px; padding:28px 32px; width:460px; max-width:90vw; position:relative; }
+        .modal-title { font-size:17px; font-weight:bold; margin-bottom:18px; color:#222; }
+        .modal-close-btn { position:absolute; top:12px; right:16px; background:none; border:none; font-size:22px; cursor:pointer; color:#999; }
+        .modal-close-btn:hover { color:#333; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display:block; font-size:13px; color:#555; margin-bottom:5px; }
+        .form-group input, .form-group select { width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:4px; font-size:14px; outline:none; box-sizing:border-box; }
+        .form-group input:focus { border-color:#c00; }
+        .order-summary { background:#fafafa; border-radius:4px; padding:12px; margin-bottom:16px; font-size:13px; color:#555; }
+        .order-summary .s-total { font-size:16px; font-weight:bold; color:#c00; }
+        .modal-footer { display:flex; justify-content:flex-end; gap:10px; }
+        .btn-cancel { padding:8px 20px; background:#fff; border:1px solid #ddd; border-radius:4px; cursor:pointer; font-size:14px; color:#555; }
+        .btn-cancel:hover { border-color:#999; }
+        .btn-pay { padding:8px 24px; background:#c00; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px; }
+        .btn-pay:hover { background:#a00; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo" onclick="window.location.href='consumer_index.html'">五金产品销售管理系统</div>
+            <a href="consumer_index.html" class="back-link">← 继续购物</a>
+        </nav>
+    </div>
+</header>
+
+<div class="cart-page">
+    <div class="container">
+        <div class="page-title">我的购物车</div>
+
+        <!-- 购物车内容 -->
+        <div id="cartContent">
+            <div class="cart-card" id="cartTableWrap">
+                <table class="cart-table">
+                    <thead>
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th>商品信息</th>
+                        <th style="width:120px;">单价</th>
+                        <th style="width:130px;">数量</th>
+                        <th style="width:100px;">小计</th>
+                        <th style="width:60px;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                    <tr><td colspan="6" style="text-align:center;padding:40px;color:#aaa;">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 结算栏 -->
+            <div class="checkout-bar" id="checkoutBar" style="display:none;">
+                <div class="bar-left">
+                    <label class="select-all-wrap">
+                        <input type="checkbox" id="selectAll">全选
+                    </label>
+                    <button class="clear-cart-btn" id="clearCartBtn">清空购物车</button>
+                </div>
+                <div class="bar-right">
+                    <div class="total-info">
+                        已选 <span id="selectedCount">0</span> 件，合计：
+                        <span class="total-price" id="totalPrice">¥0.00</span>
+                    </div>
+                    <button class="checkout-btn" id="checkoutBtn" disabled>去结算</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- 结算弹窗 -->
+<div class="modal-mask" id="checkoutModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" id="closeCheckoutModal">×</button>
+        <div class="modal-title">填写收货信息</div>
+        <div class="order-summary" id="orderSummary"></div>
+        <div class="form-group"><label>收货人姓名</label><input type="text" id="receiverName" placeholder="请输入收货人姓名"></div>
+        <div class="form-group"><label>收货人电话</label><input type="text" id="receiverPhone" placeholder="请输入11位手机号"></div>
+        <div class="form-group"><label>收货地址</label><input type="text" id="receiverAddr" placeholder="请输入详细收货地址"></div>
+        <div class="form-group"><label>支付方式</label>
+            <select id="payMethod"><option value="2">支付宝</option><option value="1">微信支付</option><option value="3">现金</option></select>
+        </div>
+        <div class="form-group"><label>备注（可选）</label><input type="text" id="remark" placeholder="填写备注信息"></div>
+        <div id="checkoutMsg" style="font-size:13px;color:#c00;min-height:16px;margin-bottom:8px;"></div>
+        <div class="modal-footer">
+            <button class="btn-cancel" id="cancelCheckout">取消</button>
+            <button class="btn-pay" id="doCheckoutBtn">确认下单并支付</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function getToken() { try { return JSON.parse(localStorage.getItem('loginUser')||'{}').token||''; } catch{return'';} }
+function authHeader() { return {'Authorization':'Bearer '+getToken()}; }
+function showToast(msg) {
+    const $t=$('#toast'); $t.text(msg).fadeIn(200);
+    clearTimeout(window._tt); window._tt=setTimeout(()=>$t.fadeOut(300),1800);
+}
+
+let cartItems = [];  // 当前购物车数据
+
+$(function() {
+    const loginUser = JSON.parse(localStorage.getItem('loginUser')||'{}');
+    if (!loginUser.token || loginUser.roleId !== 2) { window.location.href='../../index.html'; return; }
+    loadCart();
+
+    // 全选
+    $('#selectAll').on('change', function() {
+        const checked = this.checked;
+        $('.item-check').prop('checked', checked);
+        updateSummary();
+    });
+
+    // 清空购物车
+    $('#clearCartBtn').on('click', function() {
+        if (!confirm('确认清空购物车吗？')) return;
+        $.ajax({ url:'/api/v1/cart/clear', type:'DELETE', headers:authHeader(),
+            success: function(res) { if(res.code===200){ loadCart(); showToast('购物车已清空'); } }
+        });
+    });
+
+    // 去结算
+    $('#checkoutBtn').on('click', function() {
+        const selected = getSelectedItems();
+        if (!selected.length) { showToast('请选择要结算的商品'); return; }
+        const total = calcTotal(selected);
+        const lines = selected.map(it => '· ' + it.productName + ' ×' + it.quantity + ' ¥' + (it.unitPrice*it.quantity).toFixed(2)).join('<br>');
+        $('#orderSummary').html(lines + '<br>合计：<span class="s-total">¥' + total + '</span>');
+        // 预填收货信息
+        const u = JSON.parse(localStorage.getItem('loginUser')||'{}');
+        $('#receiverName').val(u.realName || '');
+        $('#receiverPhone').val(u.phone || '');
+        $('#checkoutMsg').text('');
+        $('#checkoutModal').addClass('show');
+    });
+
+    // 确认下单
+    $('#doCheckoutBtn').on('click', doCheckout);
+    $('#cancelCheckout, #closeCheckoutModal').on('click', function() { $('#checkoutModal').removeClass('show'); });
+    $(document).on('click', '.modal-mask', function(e) { if(e.target===this) $(this).removeClass('show'); });
+});
+
+function loadCart() {
+    $.ajax({ url:'/api/v1/cart/list', headers:authHeader(), success: function(res) {
+        if (res.code !== 200) { showEmpty(); return; }
+        cartItems = res.data.list || [];
+        if (!cartItems.length) { showEmpty(); return; }
+        renderCart();
+    }, error: showEmpty });
+}
+
+function showEmpty() {
+    $('#cartTableWrap').hide();
+    $('#checkoutBar').hide();
+    $('#cartContent').html('<div class="empty-cart">'
+        + '<div class="empty-icon">🛒</div>'
+        + '<p>购物车还是空的，去挑些好货吧~</p>'
+        + '<a href="consumer_index.html" class="go-shop-btn">去购物</a>'
+        + '</div>');
+}
+
+function renderCart() {
+    let html = '';
+    cartItems.forEach(function(it) {
+        const subtotal = (parseFloat(it.unitPrice||0) * (it.quantity||1)).toFixed(2);
+        const specDesc = [it.material, it.size, it.unit].filter(Boolean).join(' · ');
+        html += '<tr data-cart-id="' + it.cartId + '" data-spec-id="' + it.specId + '" data-price="' + (it.unitPrice||0) + '" data-stock="' + (it.stockQuantity||0) + '">'
+            + '<td><input type="checkbox" class="item-check" checked></td>'
+            + '<td><div class="item-name">' + (it.productName||'商品') + '</div>'
+            + '<div class="item-spec">' + (specDesc||it.specCode||'') + '</div></td>'
+            + '<td class="item-price">¥' + parseFloat(it.unitPrice||0).toFixed(2) + '</td>'
+            + '<td><div class="qty-ctrl">'
+            + '<button class="qty-btn qty-minus">−</button>'
+            + '<input type="number" class="qty-input" value="' + (it.quantity||1) + '" min="1" max="' + (it.stockQuantity||999) + '">'
+            + '<button class="qty-btn qty-plus">+</button>'
+            + '</div></td>'
+            + '<td class="item-subtotal item-price">¥' + subtotal + '</td>'
+            + '<td><button class="del-btn" title="删除">×</button></td>'
+            + '</tr>';
+    });
+    $('#cartTableBody').html(html);
+    $('#checkoutBar').show();
+    updateSummary();
+    bindTableEvents();
+}
+
+function bindTableEvents() {
+    // 数量减
+    $('#cartTableBody').on('click', '.qty-minus', function() {
+        const $row = $(this).closest('tr');
+        const $input = $row.find('.qty-input');
+        let val = parseInt($input.val()) - 1;
+        if (val < 1) return;
+        updateCartQty($row, val, $input);
+    });
+    // 数量加
+    $('#cartTableBody').on('click', '.qty-plus', function() {
+        const $row = $(this).closest('tr');
+        const $input = $row.find('.qty-input');
+        const max = parseInt($row.data('stock')) || 999;
+        let val = parseInt($input.val()) + 1;
+        if (val > max) { showToast('已达库存上限（' + max + '）'); return; }
+        updateCartQty($row, val, $input);
+    });
+    // 输入框改变
+    $('#cartTableBody').on('change', '.qty-input', function() {
+        const $row = $(this).closest('tr');
+        let val = parseInt($(this).val());
+        const max = parseInt($row.data('stock')) || 999;
+        if (isNaN(val) || val < 1) val = 1;
+        if (val > max) { val = max; showToast('库存不足，已调整为最大库存 ' + max); }
+        $(this).val(val);
+        updateCartQty($row, val, $(this));
+    });
+    // 删除
+    $('#cartTableBody').on('click', '.del-btn', function() {
+        const $row = $(this).closest('tr');
+        const cartId = $row.data('cart-id');
+        $.ajax({ url:'/api/v1/cart/remove/'+cartId, type:'DELETE', headers:authHeader(),
+            success: function(res) { if(res.code===200){ $row.remove(); showToast('已移除'); updateSummary(); checkEmpty(); } }
+        });
+    });
+    // 勾选
+    $('#cartTableBody').on('change', '.item-check', function() {
+        const allChecked = $('.item-check').length === $('.item-check:checked').length;
+        $('#selectAll').prop('checked', allChecked);
+        updateSummary();
+    });
+}
+
+function updateCartQty($row, val, $input) {
+    const cartId = $row.data('cart-id');
+    $input.val(val);
+    $.ajax({ url:'/api/v1/cart/update', type:'PUT',
+        headers: $.extend(authHeader(), {'Content-Type':'application/json'}),
+        data: JSON.stringify({ cartId: cartId, quantity: val }),
+        success: function(res) {
+            if (res.code === 200) {
+                // 更新小计
+                const price = parseFloat($row.data('price')) || 0;
+                $row.find('.item-subtotal').text('¥' + (price * val).toFixed(2));
+                $row.data('qty', val);
+                // 更新 cartItems 中的数量
+                cartItems.forEach(function(it) { if (it.cartId == cartId) it.quantity = val; });
+                updateSummary();
+            } else { showToast(res.msg || '更新失败'); }
+        }
+    });
+}
+
+function checkEmpty() {
+    if ($('#cartTableBody tr').length === 0) showEmpty();
+    else updateSummary();
+}
+
+function getSelectedItems() {
+    const selected = [];
+    $('#cartTableBody tr').each(function() {
+        if ($(this).find('.item-check').is(':checked')) {
+            const cartId = $(this).data('cart-id');
+            const it = cartItems.find(c => c.cartId == cartId);
+            if (it) {
+                selected.push({
+                    specId: it.specId,
+                    quantity: parseInt($(this).find('.qty-input').val()) || it.quantity,
+                    salePrice: it.unitPrice,
+                    unitPrice: it.unitPrice,
+                    productName: it.productName || '商品',
+                    cartId: it.cartId
+                });
+            }
+        }
+    });
+    return selected;
+}
+
+function calcTotal(items) {
+    return items.reduce((sum, it) => sum + parseFloat(it.unitPrice||0) * (it.quantity||1), 0).toFixed(2);
+}
+
+function updateSummary() {
+    const selected = getSelectedItems();
+    const count = selected.reduce((s, it) => s + (it.quantity||1), 0);
+    const total = calcTotal(selected);
+    $('#selectedCount').text(count);
+    $('#totalPrice').text('¥' + total);
+    $('#checkoutBtn').prop('disabled', selected.length === 0);
+}
+
+function doCheckout() {
+    const selected = getSelectedItems();
+    if (!selected.length) return;
+    const receiverName = $.trim($('#receiverName').val());
+    const receiverPhone = $.trim($('#receiverPhone').val());
+    const receiverAddr = $.trim($('#receiverAddr').val());
+    const payMethod = parseInt($('#payMethod').val());
+    const remark = $.trim($('#remark').val());
+
+    if (!receiverName) { $('#checkoutMsg').text('请填写收货人姓名'); return; }
+    if (!receiverPhone || !/^1[3-9]\d{9}$/.test(receiverPhone)) { $('#checkoutMsg').text('请填写正确的手机号'); return; }
+    if (!receiverAddr) { $('#checkoutMsg').text('请填写收货地址'); return; }
+
+    const loginUser = JSON.parse(localStorage.getItem('loginUser')||'{}');
+    const orderBody = {
+        userId: loginUser.userId,
+        orderType: 1,    // 线上
+        tradeType: 2,    // 零售
+        receiverName, receiverPhone, receiverAddr, remark,
+        items: selected.map(it => ({ specId: it.specId, saleQuantity: it.quantity, salePrice: it.salePrice }))
+    };
+
+    const $btn = $('#doCheckoutBtn').prop('disabled', true).text('下单中...');
+    $.ajax({
+        url: '/api/v1/order/create', type: 'POST',
+        headers: $.extend(authHeader(), {'Content-Type':'application/json'}),
+        data: JSON.stringify(orderBody),
+        success: function(res) {
+            if (res.code !== 200) { $('#checkoutMsg').text(res.msg||'下单失败'); $btn.prop('disabled',false).text('确认下单并支付'); return; }
+            const orderId = res.data.orderId;
+            const totalAmount = calcTotal(selected);
+            // 立即发起支付
+            $.ajax({
+                url: '/api/v1/order/pay/' + orderId, type: 'PUT',
+                headers: $.extend(authHeader(), {'Content-Type':'application/json'}),
+                data: JSON.stringify({ payAmount: totalAmount, payMethod: payMethod, transactionId: 'TX'+Date.now(), operatorId: loginUser.userId }),
+                success: function(payRes) {
+                    if (payRes.code === 200) {
+                        // 删除已结算的购物车项
+                        const cartIds = selected.map(it => it.cartId);
+                        const removeCalls = cartIds.map(cid =>
+                            $.ajax({ url:'/api/v1/cart/remove/'+cid, type:'DELETE', headers:authHeader() })
+                        );
+                        $.when.apply($, removeCalls).always(function() {
+                            $('#checkoutModal').removeClass('show');
+                            showToast('下单并支付成功！');
+                            loadCart();
+                        });
+                    } else {
+                        $('#checkoutMsg').text(payRes.msg||'支付失败，请稍后重试');
+                    }
+                },
+                error: function() { $('#checkoutMsg').text('支付请求失败，请重试'); },
+                complete: function() { $btn.prop('disabled',false).text('确认下单并支付'); }
+            });
+        },
+        error: function() { $('#checkoutMsg').text('下单失败，请重试'); $btn.prop('disabled',false).text('确认下单并支付'); }
+    });
+}
+</script>
+</body>
+</html>

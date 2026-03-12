@@ -1,0 +1,557 @@
+* {
+    margin: 0;
+    padding: 5px;
+    box-sizing: border-box;
+    font-family: "Microsoft Yahei", sans-serif;
+}
+a {
+    text-decoration: none;
+    color: #333;
+}
+ul,li {
+    list-style: none;
+}
+.container {
+    width: 90%;
+    margin: 0 auto;
+}
+/* 顶部导航栏样式 */
+.header {
+    border-bottom: 2px solid #c00;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+}
+.logo {
+    font-size: 28px;
+    color: #c00;
+    font-weight: bold;
+}
+.nav-menu {
+    display: flex;
+    gap: 30px;
+}
+.nav-menu li a {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 5px 0;
+}
+.nav-menu li a:hover {
+    color: #c00;
+    border-bottom: 2px solid #c00;
+}
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.search-box {
+    display: flex;
+}
+.search-box input {
+    width: 300px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #ddd;
+    outline: none;
+    border-radius: 3px 0 0 3px;
+}
+.search-box button {
+    width: 80px;
+    height: 36px;
+    border: none;
+    background: #c00;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 0 3px 3px 0;
+}
+.user-op {
+    display: flex;
+    gap: 15px;
+}
+.user-op a {
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.user-op a:hover {
+    color: #c00;
+}
+.user-op .icon {
+    font-size: 18px;
+}
+/* 轮播图样式 */
+.parallax-swiper {
+    width: 100%;
+    height: 500px;
+    background: #cac4c4;
+    margin: 20px 0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.parallax-swiper .swiper-slide {
+    font-size: 18px;
+    color: #fff;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 40px 60px;
+    position: relative;
+}
+.parallax-swiper .parallax-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 130%;
+    height: 100%;
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-position: center;
+    transform: translate3d(0, 0, 0);
+}
+.parallax-swiper .swiper-slide .title {
+    font-size: 41px;
+    font-weight: 300;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 10;
+}
+.parallax-swiper .swiper-slide .subtitle {
+    font-size: 21px;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 10;
+}
+.parallax-swiper .swiper-slide .btn {
+    display: inline-block;
+    padding: 10px 30px;
+    background: #c00;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 16px;
+    position: relative;
+    z-index: 10;
+}
+.swiper-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+}
+.swiper-pagination-bullet {
+    padding: 0 !important;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    opacity: 0.5;
+}
+.swiper-pagination-bullet-active {
+    opacity: 1;
+    background: #c00;
+}
+/* 热销商品推荐样式 */
+.hot-products {
+    margin: 40px 0;
+}
+.section-title {
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 2px solid #c00;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+.section-title h3 {
+    color: #c00;
+    font-size: 18px;
+}
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+.product-card {
+    border: 1px solid #eee;
+    border-radius: 5px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.product-card:hover {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+}
+.product-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+.product-info {
+    padding: 15px;
+}
+.product-name {
+    font-size: 16px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.product-spec {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+}
+.product-price {
+    font-size: 18px;
+    color: #c00;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+.product-price del {
+    font-size: 13px;
+    color: #999;
+    font-weight: normal;
+}
+.product-stock {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 15px;
+}
+.product-stock .stock-high {
+    color: #090;
+}
+.product-stock .stock-low {
+    color: #f60;
+}
+.product-stock .stock-out {
+    color: #999;
+}
+.add-cart {
+    display: block;
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    background: #c00;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+}
+.add-cart:hover {
+    background: #a00;
+}
+/* 促销专区样式 */
+.promotion {
+    margin: 40px 0;
+}
+.promotion-tags {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.promotion-tag {
+    display: inline-block;
+    padding: 8px 20px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.promotion-tag.active {
+    background: #c00;
+    color: #fff;
+}
+.promotion-tag:hover {
+    background: #eee;
+}
+.promotion-tag.active:hover {
+    background: #a00;
+}
+/* 页脚样式 */
+.footer {
+    background: #333;
+    color: #ccc;
+    padding: 40px 0;
+    margin-top: 50px;
+}
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+}
+.footer-info, .footer-contact, .footer-links {
+    width: 31%;
+}
+.footer h4 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #666;
+}
+.footer p {
+    line-height: 2;
+    font-size: 14px;
+}
+.footer-links ul {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+.footer-links a {
+    color: #ccc;
+    font-size: 14px;
+}
+.footer-links a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+.copyright {
+    text-align: center;
+    padding-top: 30px;
+    margin-top: 20px;
+    border-top: 1px solid #666;
+    font-size: 12px;
+}
+/* 弹窗遮罩层 */
+ .modal-mask {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     height: 100%;
+     background: rgba(0, 0, 0, 0.5);
+     z-index: 9999;
+     display: none;
+     justify-content: center;
+     align-items: center;
+ }
+/* 弹窗容器 */
+.modal-container {
+    background: #fff;
+    border-radius: 8px;
+    width: 680px;
+    max-width: 90%;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+/* 关闭按钮 */
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+}
+.modal-close:hover {
+    color: #c00;
+}
+/* 登录表单样式适配 */
+.login_form {
+    padding: 20px;
+    box-shadow: none;
+    width: 100%;
+    background: #fff;
+}
+.login-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+    font-weight: bold;
+}
+.list-item {
+    margin: 0 auto 20px;
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+.lable {
+    color: #333;
+    width: 80px;
+    font-size: 16px;
+    line-height: 40px;
+    text-align: right;
+    padding-right: 10px;
+}
+.list-item input {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0 15px;
+    color: #333;
+    flex: 1;
+    background: white;
+    font-size: 16px;
+    height: 44px;
+    outline: none;
+}
+.list-item input:focus {
+    border-color: #c00;
+}
+.password-box {
+    flex: 1;
+    display: flex;
+    position: relative;
+    align-items: center;
+}
+.password-box input {
+    width: 100%;
+}
+.toggle-password {
+    cursor: pointer;
+    z-index: 1;
+    color: #666;
+    position: absolute;
+    right: 15px;
+    font-size: 18px;
+    user-select: none;
+    border: none;
+    background: transparent;
+}
+.list-btn {
+    padding: 10px 0 0 0;
+    text-align: center;
+}
+.login_btn {
+    border: 0;
+    cursor: pointer;
+    padding: 0 20px;
+    margin: 0 5px;
+    color: #fff;
+    font-size: 16px;
+    border-radius: 4px;
+    outline: none;
+    background: #c00;
+    width: 45%;
+    height: 44px;
+    transition: all 0.3s;
+}
+.login_btn:hover {
+    background: #a00;
+}
+/* 注册表单样式 */
+.register_form {
+    padding: 20px;
+    width: 100%;
+}
+.register-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+    font-weight: bold;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 16px;
+}
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: #c00;
+}
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.register_btn, .back_btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+    text-decoration: none;
+}
+.register_btn {
+    background-color: #c00;
+    color: white;
+}
+.register_btn:hover {
+    background-color: #a00;
+}
+.back_btn {
+    background-color: #6c757d;
+    color: white;
+}
+.back_btn:hover {
+    background-color: #5a6268;
+}
+/* 消息提示 */
+.message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    display: none;
+}
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    display: block;
+}
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    display: block;
+}
+.message.green {
+    color: green;
+    background: #f0f9ff;
+}
+
+.avatar-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.avatar-img {
+    width: 160%;
+    height: 160%;
+    object-fit: cover;
+    display: block;
+}

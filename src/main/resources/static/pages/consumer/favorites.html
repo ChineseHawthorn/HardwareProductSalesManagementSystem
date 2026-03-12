@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的收藏 - 五金产品销售管理系统</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/index.css">
+    <script src="../../js/jquery-3.7.1.min.js"></script>
+    <style>
+        html, body { height: 100%; }
+        body { background: #f5f5f5; display: flex; flex-direction: column; min-height: 100vh; }
+        .header { flex-shrink: 0; border-bottom: 2px solid #c00; background: #fff; position: sticky; top: 0; z-index: 999; }
+        .nav { display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .logo { font-size: 22px; color: #c00; font-weight: bold; cursor: pointer; }
+        .back-link { font-size: 14px; color: #666; text-decoration: none; }
+        .back-link:hover { color: #c00; }
+
+        .fav-page { flex: 1; padding: 24px 0 40px; }
+        .page-title { font-size: 20px; font-weight: bold; color: #222; margin-bottom: 20px; }
+
+        /* 商品网格 */
+        .fav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+        /* 商品卡片 */
+        .product-card { position: relative; border: 1px solid #eee; border-radius: 5px; overflow: hidden; transition: all .3s; background: #fff; }
+        .product-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.12); transform: translateY(-4px); }
+        .product-img-wrap { position: relative; overflow: hidden; height: 200px; }
+        .product-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* 取消收藏按钮（右上角） */
+        .unfav-btn {
+            position: absolute; top: 8px; right: 8px;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,.85); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; transition: all .2s; z-index: 2;
+            color: #c00;
+        }
+        .unfav-btn:hover { background: #fff; transform: scale(1.1); }
+
+        .product-info { padding: 12px 14px 14px; }
+        .product-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #222; }
+        .product-brand { font-size: 12px; color: #999; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .product-price { font-size: 18px; color: #c00; font-weight: bold; margin-bottom: 6px; }
+        .product-price .unit { font-size: 12px; font-weight: normal; color: #999; }
+        .product-stock { font-size: 12px; color: #333; margin-bottom: 12px; }
+        .add-cart { display: block; width: 100%; height: 34px; line-height: 34px; text-align: center; background: #c00; color: #fff; border-radius: 3px; font-size: 13px; border: none; cursor: pointer; }
+        .add-cart:hover { background: #a00; }
+        .add-cart:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 空收藏 */
+        .empty-fav { text-align: center; padding: 80px 20px; grid-column: 1/-1; }
+        .empty-fav .empty-icon { font-size: 64px; color: #ddd; margin-bottom: 16px; }
+        .empty-fav p { color: #aaa; font-size: 15px; margin-bottom: 20px; }
+        .go-shop-btn { display: inline-block; padding: 10px 28px; background: #c00; color: #fff; border-radius: 4px; font-size: 14px; text-decoration: none; }
+        .go-shop-btn:hover { background: #a00; color: #fff; }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 22px; border-radius: 20px; font-size: 14px; z-index: 9999; display: none; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo" onclick="window.location.href='consumer_index.html'">五金产品销售管理系统</div>
+            <a href="consumer_index.html" class="back-link">← 继续购物</a>
+        </nav>
+    </div>
+</header>
+
+<div class="fav-page">
+    <div class="container">
+        <div class="page-title">我的收藏 <span style="font-size:14px;color:#888;font-weight:normal;" id="favCount"></span></div>
+        <div class="fav-grid" id="favGrid">
+            <div class="empty-fav"><div class="empty-icon">❤️</div><p>加载中...</p></div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+function getToken() { try{return JSON.parse(localStorage.getItem('loginUser')||'{}').token||'';}catch{return'';} }
+function authHeader() { return {'Authorization':'Bearer '+getToken()}; }
+function showToast(msg) {
+    const $t=$('#toast'); $t.text(msg).fadeIn(200);
+    clearTimeout(window._tt); window._tt=setTimeout(()=>$t.fadeOut(300),1800);
+}
+function resolveImg(url) {
+    if(!url) return '../../images/avatar/default.png';
+    if(url.startsWith('/images/')) return '../..'+url;
+    if(url.startsWith('./images/')) return '../../'+url.replace('./','');
+    if(url.startsWith('images/')) return '../../'+url;
+    return url;
+}
+
+$(function() {
+    const _u = JSON.parse(localStorage.getItem('loginUser')||'{}');
+    if (!_u.token || _u.roleId !== 2) { window.location.href='../../index.html'; return; }
+    loadFavorites();
+});
+
+function loadFavorites() {
+    $.ajax({ url:'/api/v1/favorite/list', headers:authHeader(), success:function(res) {
+        if (res.code!==200||!res.data) { showEmpty(); return; }
+        const list = res.data.list || [];
+        if (!list.length) { showEmpty(); return; }
+        $('#favCount').text('共 '+list.length+' 件');
+        renderFavGrid(list);
+    }, error:showEmpty });
+}
+
+function showEmpty() {
+    $('#favCount').text('');
+    $('#favGrid').html('<div class="empty-fav">'
+        + '<div class="empty-icon">❤️</div>'
+        + '<p>还没有收藏任何商品，快去挑选吧~</p>'
+        + '<a href="consumer_index.html" class="go-shop-btn">去逛逛</a>'
+        + '</div>');
+}
+
+function renderFavGrid(list) {
+    let html = '';
+    list.forEach(function(p) {
+        const noStock = !p.stockQuantity || p.stockQuantity <= 0;
+        const imgSrc = p.mainImage ? resolveImg(p.mainImage) : '../../images/avatar/default.png';
+        const price = p.minPrice != null ? '¥'+parseFloat(p.minPrice).toFixed(2) : '价格待定';
+        const unit = p.unit ? '/'+p.unit : '';
+        const brand = (p.brand||p.model) ? ((p.brand||'')+' '+(p.model||'')).trim() : '&nbsp;';
+        let stockHtml = '';
+        if (noStock) stockHtml = '<span class="stock-out">已售罄</span>';
+        else if (p.stockQuantity<=50) stockHtml = '<span class="stock-low">库存紧张（'+p.stockQuantity+(p.unit||'')+'）</span>';
+        else stockHtml = '<span class="stock-high">库存充足</span>';
+
+        html += '<div class="product-card"'
+            +' data-pid="'+p.productId+'"'
+            +' data-fav-id="'+p.favoriteId+'"'
+            +' data-spec-id="'+(p.firstSpecId||'')+'">'
+            +'<div class="product-img-wrap">'
+            +'<img src="'+imgSrc+'" alt="'+p.productName+'" class="product-img" onerror="this.src=\'../../images/avatar/default.png\'">'
+            +'<button class="unfav-btn" title="取消收藏">❤️</button>'
+            +'</div>'
+            +'<div class="product-info">'
+            +'<h4 class="product-name" title="'+p.productName+'">'+p.productName+'</h4>'
+            +'<p class="product-brand">'+brand+'</p>'
+            +'<div class="product-price">'+price+'<span class="unit">'+unit+'</span></div>'
+            +'<p class="product-stock">'+stockHtml+'</p>'
+            +'<button class="add-cart"'+(noStock?' disabled':'')+'>'+(noStock?'暂时缺货':'加入购物车')+'</button>'
+            +'</div></div>';
+    });
+    $('#favGrid').html(html);
+    bindCardEvents();
+}
+
+function bindCardEvents() {
+    // 取消收藏
+    $('#favGrid').on('click', '.unfav-btn', function() {
+        const $card = $(this).closest('.product-card');
+        const productId = $card.data('pid');
+        if (!confirm('确认取消收藏该商品吗？')) return;
+        $.ajax({ url:'/api/v1/favorite/toggle/'+productId, type:'POST', headers:authHeader(),
+            success: function(res) {
+                if (res.data===false || res.code===200) {
+                    showToast('已取消收藏');
+                    $card.css('transition','opacity .3s').css('opacity',0);
+                    setTimeout(function() { $card.remove(); recheckEmpty(); }, 300);
+                }
+            },
+            error: function() { showToast('操作失败，请重试'); }
+        });
+    });
+
+    // 加入购物车
+    $('#favGrid').on('click', '.add-cart:not(:disabled)', function() {
+        const $card = $(this).closest('.product-card');
+        const specId = $card.data('spec-id');
+        if (!specId) { showToast('该商品暂无可用规格'); return; }
+        const $btn = $(this).prop('disabled', true).text('添加中...');
+        $.ajax({
+            url: '/api/v1/cart/add', type: 'POST',
+            headers: $.extend(authHeader(), {'Content-Type':'application/json'}),
+            data: JSON.stringify({ specId: specId, quantity: 1 }),
+            success: function(res) {
+                if (res.code===200) showToast('已加入购物车 🛒');
+                else showToast(res.msg||'添加失败');
+            },
+            error: function() { showToast('操作失败，请重试'); },
+            complete: function() { $btn.prop('disabled',false).text('加入购物车'); }
+        });
+    });
+}
+
+function recheckEmpty() {
+    const remaining = $('#favGrid .product-card').length;
+    if (remaining === 0) showEmpty();
+    else $('#favCount').text('共 '+remaining+' 件');
+}
+</script>
+</body>
+</html>

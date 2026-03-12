@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 订单管理</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==1){window.location.href='../../index.html';}}());</script>
+    <style>
+        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+        .modal-overlay.show{display:flex}
+        .modal{background:#fff;border-radius:12px;padding:28px;width:620px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+        .modal-title{font-size:18px;font-weight:700;margin:0 0 16px;color:#111827}
+        .form-row{margin-bottom:12px}
+        .form-label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:#374151}
+        .form-input{width:100%;height:38px;padding:0 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box}
+        .form-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+        .btn-cancel-modal{background:#f3f4f6;color:#374151}
+        .pagination{padding:16px;text-align:right}
+        .page-btn{min-width:34px;height:34px;padding:0 8px;border-radius:8px;border:1px solid #e5eaf3;background:#fff;cursor:pointer;font-size:13px;margin:0 2px}
+        .page-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+        .page-btn:disabled{opacity:.5;cursor:not-allowed}
+        .loading-row td{text-align:center;color:#9ca3af;padding:40px}
+        /* 规格搜索 */
+        .spec-wrap{position:relative}
+        .spec-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:150px;overflow-y:auto;z-index:30;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none}
+        .spec-opt{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f3f4f6}
+        .spec-opt:hover{background:#f0f9ff}
+        /* 商品明细行 */
+        .item-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px}
+        .item-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end}
+        .btn-rm{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px}
+        /* 详情弹窗 */
+        .detail-section{margin-bottom:14px}
+        .detail-section h4{font-size:14px;font-weight:700;color:#374151;margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid #e5e7eb}
+        .info-kv{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:#374151}
+        .info-kv label{color:#6b7280}
+        .detail-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+        .detail-table th{background:#f9fafb;padding:8px;text-align:left;font-weight:600;border-bottom:1px solid #e5e7eb}
+        .detail-table td{padding:8px;border-bottom:1px solid #f3f4f6}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店员端</div>
+        </div>
+        <div class="nav">
+            <a href="staff_console.html" class="nav-item"><i class="fas fa-tachometer-alt nav-ico"></i><span class="nav-text">控制台首页</span></a>
+            <a href="product_manager.html" class="nav-item"><i class="fas fa-box nav-ico"></i><span class="nav-text">商品管理</span></a>
+            <a href="inventory_manager.html" class="nav-item"><i class="fas fa-warehouse nav-ico"></i><span class="nav-text">库存管理</span></a>
+            <a href="order_manager.html" class="nav-item active"><i class="fas fa-shopping-cart nav-ico"></i><span class="nav-text">订单管理</span></a>
+            <a href="feedback_manager.html" class="nav-item"><i class="fas fa-comments nav-ico"></i><span class="nav-text">反馈管理</span></a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <h1 class="page-title">订单管理</h1>
+            <div class="topbar-right">
+                <div class="search"><input type="text" id="searchInput" placeholder="搜索订单号、收货人、手机号..."></div>
+                <a href="staff_profile.html" class="user-info" style="text-decoration:none;color:inherit;cursor:pointer;" title="个人信息">
+                    <span id="adminName" style="margin-right:10px;font-size:14px;">员工</span>
+                    <img id="adminAvatar" src="../../images/avatar/default.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 筛选栏 -->
+            <div class="panel">
+                <div class="toolbar" style="flex-direction:column;gap:12px;align-items:stretch;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <button class="btn btn-primary" id="btnCreateOrder">
+                            <i class="fas fa-plus btn-ico"></i> 手动创建订单
+                        </button>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <span style="font-size:13px;color:#374151;">日期范围：</span>
+                            <input type="date" class="select" id="dateStart" style="width:130px;">
+                            <span style="font-size:13px;">至</span>
+                            <input type="date" class="select" id="dateEnd" style="width:130px;">
+                        </div>
+                    </div>
+                    <div class="filter" style="flex-wrap:wrap;gap:10px;">
+                        <span>订单状态：</span>
+                        <select class="select" id="filterStatus">
+                            <option value="">全部状态</option>
+                            <option value="0">待支付</option>
+                            <option value="4">待发货</option>
+                            <option value="1">已发货</option>
+                            <option value="5">已完成</option>
+                            <option value="2">已取消</option>
+                            <option value="3">已退款</option>
+                        </select>
+                        <span>订单类型：</span>
+                        <select class="select" id="filterOrderType">
+                            <option value="">全部类型</option>
+                            <option value="1">线上自助</option>
+                            <option value="2">线下录入</option>
+                        </select>
+                        <span>交易类型：</span>
+                        <select class="select" id="filterTradeType">
+                            <option value="">全部类型</option>
+                            <option value="1">批发</option>
+                            <option value="2">零售</option>
+                        </select>
+                        <button class="btn btn-primary" id="btnSearch"><i class="fas fa-search"></i> 筛选</button>
+                        <button class="btn" style="background:#f3f4f6;color:#374151;" id="btnReset">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 订单列表 -->
+            <div class="panel">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr>
+                            <th>订单号</th>
+                            <th>收货人</th>
+                            <th>手机号</th>
+                            <th>订单金额</th>
+                            <th>订单类型</th>
+                            <th>交易类型</th>
+                            <th>支付状态</th>
+                            <th>下单时间</th>
+                            <th>操作</th>
+                        </tr></thead>
+                        <tbody id="orderTbody">
+                            <tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 创建订单弹窗 -->
+<div class="modal-overlay" id="modalCreate">
+    <div class="modal">
+        <h3 class="modal-title">手动创建订单（线下录入）</h3>
+        <div class="g2">
+            <div class="form-row">
+                <label class="form-label">收货人姓名 <span style="color:#ef4444;">*</span></label>
+                <input class="form-input" id="cReceiverName" placeholder="姓名">
+            </div>
+            <div class="form-row">
+                <label class="form-label">手机号 <span style="color:#ef4444;">*</span></label>
+                <input class="form-input" id="cReceiverPhone" placeholder="手机号">
+            </div>
+        </div>
+        <div class="form-row">
+            <label class="form-label">收货地址</label>
+            <input class="form-input" id="cReceiverAddr" placeholder="收货地址（线下可留空）">
+        </div>
+        <div class="g2">
+            <div class="form-row">
+                <label class="form-label">交易类型 <span style="color:#ef4444;">*</span></label>
+                <select class="form-input" id="cTradeType">
+                    <option value="2">零售</option>
+                    <option value="1">批发</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label class="form-label">备注</label>
+                <input class="form-input" id="cRemark" placeholder="备注信息（可选）">
+            </div>
+        </div>
+
+        <div style="font-weight:600;font-size:14px;color:#374151;margin-bottom:8px;">商品明细</div>
+        <div id="orderItems"></div>
+        <button class="btn" style="background:#f0f9ff;color:#2563eb;width:100%;margin-bottom:12px;" id="btnAddItem">
+            <i class="fas fa-plus"></i> 添加商品
+        </button>
+        <div style="text-align:right;font-size:14px;font-weight:600;color:#111827;margin-bottom:4px;">
+            合计：<span id="totalAmount" style="color:#3b82f6;font-size:18px;">¥0.00</span>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel-modal" id="btnCancelCreate">取消</button>
+            <button class="btn btn-primary" id="btnSubmitCreate">创建订单</button>
+        </div>
+    </div>
+</div>
+
+<!-- 订单详情弹窗 -->
+<div class="modal-overlay" id="modalDetail">
+    <div class="modal" style="width:680px;">
+        <h3 class="modal-title">订单详情</h3>
+        <div id="detailContent"></div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel-modal" id="btnCloseDetail">关闭</button>
+        </div>
+    </div>
+</div>
+
+<!-- 支付弹窗（线下录入订单的支付） -->
+<div class="modal-overlay" id="modalPay">
+    <div class="modal" style="width:420px;">
+        <h3 class="modal-title">确认收款</h3>
+        <input type="hidden" id="payOrderId">
+        <div class="form-row">
+            <label class="form-label">应收金额</label>
+            <input class="form-input" id="payAmount" readonly style="background:#f9fafb;font-weight:700;">
+        </div>
+        <div class="form-row">
+            <label class="form-label">收款方式 <span style="color:#ef4444;">*</span></label>
+            <select class="form-input" id="payMethod">
+                <option value="3">现金</option>
+                <option value="2">支付宝</option>
+                <option value="1">微信</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel-modal" id="btnCancelPay">取消</button>
+            <button class="btn btn-primary" id="btnConfirmPay">确认收款</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/jquery-3.7.1.min.js"></script>
+<script>
+var loginUser = {};
+try { loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}'); } catch(e) {}
+var TOKEN = loginUser.token || '';
+var curPage = 1, totalPages = 1;
+var itemIdx = 0;
+
+function H() { return { 'Authorization': 'Bearer ' + TOKEN }; }
+function HJ() { return Object.assign(H(), { 'Content-Type': 'application/json' }); }
+
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtTime(t) {
+    if (!t) return '-';
+    return new Date(t).toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+}
+
+// ---------- 用户信息 ----------
+function loadUserInfo() {
+    $('#adminName').text(loginUser.username || '员工');
+    var av = loginUser.avatar || '';
+    if (av.startsWith('./')) av = av.replace('./', '../../');
+    if (av) $('#adminAvatar').attr('src', av);
+}
+
+// ---------- 状态标签 ----------
+var STATUS_LABEL = {0:'待支付',1:'已发货',2:'已取消',3:'已退款',4:'待发货',5:'已完成'};
+var STATUS_TAG   = {
+    0:'<span class="tag tag-wait">待支付</span>',
+    1:'<span class="tag tag-on">已发货</span>',
+    2:'<span class="tag tag-off">已取消</span>',
+    3:'<span class="tag tag-off" style="background:#f3f0ff;color:#7c3aed;">已退款</span>',
+    4:'<span class="tag tag-wait" style="background:#e0f2fe;color:#0284c7;">待发货</span>',
+    5:'<span class="tag tag-on" style="background:#d1fae5;color:#065f46;">已完成</span>'
+};
+var ORDER_TYPE = {1:'线上自助', 2:'线下录入'};
+var TRADE_TYPE = {1:'批发', 2:'零售'};
+
+// ---------- 加载订单 ----------
+function loadOrders(page) {
+    curPage = page || 1;
+    var params = { pageNum: curPage, pageSize: 10 };
+    var st = $('#filterStatus').val();
+    var ot = $('#filterOrderType').val();
+    var tt = $('#filterTradeType').val();
+    if (st !== '') params.payStatus = st;
+    if (ot !== '') params.orderType = ot;
+    $('#orderTbody').html('<tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>');
+
+    $.ajax({
+        url: '/api/v1/order/list', type: 'GET', headers: H(), data: params,
+        success: function(r) {
+            if (r.code !== 200) { showErr(r.msg); return; }
+            var page = r.data;
+            var recs = page.records || [];
+            totalPages = page.pages || 1;
+
+            // 客户端过滤交易类型（后端接口暂无该参数）
+            if (tt !== '') recs = recs.filter(function(o){ return String(o.tradeType)===tt; });
+
+            // 关键词过滤
+            var kw = $.trim($('#searchInput').val()).toLowerCase();
+            if (kw) {
+                recs = recs.filter(function(o){
+                    return (o.orderId||'').toLowerCase().indexOf(kw)>=0
+                        || (o.receiverName||'').indexOf(kw)>=0
+                        || (o.receiverPhone||'').indexOf(kw)>=0;
+                });
+            }
+
+            // 日期过滤
+            var ds = $('#dateStart').val(), de = $('#dateEnd').val();
+            if (ds) recs = recs.filter(function(o){ return o.createTime && new Date(o.createTime) >= new Date(ds); });
+            if (de) recs = recs.filter(function(o){ return o.createTime && new Date(o.createTime) <= new Date(de+'T23:59:59'); });
+
+            renderTable(recs, page.total || 0);
+            renderPage(page.total || 0);
+        },
+        error: function(){ showErr('加载失败，请重试'); }
+    });
+}
+
+function renderTable(recs, total) {
+    if (!recs.length) {
+        $('#orderTbody').html('<tr class="loading-row"><td colspan="9" style="color:#9ca3af;">暂无订单数据</td></tr>');
+        return;
+    }
+    var h = '';
+    recs.forEach(function(o) {
+        var statusTag = STATUS_TAG[o.payStatus] || '<span class="tag">未知</span>';
+        var ops = '<button class="btn btn-edit btnView" style="min-width:44px;" data-id="'+esc(o.orderId)+'">详情</button> ';
+        if (o.payStatus === 4) {
+            ops += '<button class="btn" style="background:#e0f2fe;color:#0284c7;min-width:44px;" onclick="shipOrder(\''+esc(o.orderId)+'\')">发货</button> ';
+        }
+        if (o.payStatus === 1) {
+            ops += '<button class="btn btn-edit" style="background:#d1fae5;color:#065f46;min-width:44px;" onclick="completeOrder(\''+esc(o.orderId)+'\')">完成</button> ';
+        }
+        if (o.payStatus === 0) {
+            ops += '<button class="btn" style="background:#f0f9ff;color:#2563eb;min-width:44px;" onclick="openPay(\''+esc(o.orderId)+'\','+o.orderAmount+')">收款</button>';
+            ops += ' <button class="btn btn-del" style="min-width:44px;" onclick="cancelOrder(\''+esc(o.orderId)+'\')">取消</button>';
+        }
+        h += '<tr>' +
+            '<td style="font-size:12px;font-weight:600;">'+esc(o.orderId||'-')+'</td>'+
+            '<td>'+esc(o.receiverName||'-')+'</td>'+
+            '<td>'+esc(o.receiverPhone||'-')+'</td>'+
+            '<td style="font-weight:700;color:#111827;">¥'+Number(o.orderAmount||0).toFixed(2)+'</td>'+
+            '<td>'+esc(ORDER_TYPE[o.orderType]||'-')+'</td>'+
+            '<td>'+esc(TRADE_TYPE[o.tradeType]||'-')+'</td>'+
+            '<td>'+statusTag+'</td>'+
+            '<td style="font-size:12px;color:#6b7280;">'+fmtTime(o.createTime)+'</td>'+
+            '<td class="ops">'+ops+'</td>'+
+        '</tr>';
+    });
+    $('#orderTbody').html(h);
+}
+
+function renderPage(total) {
+    var $p = $('#pagination');
+    if (totalPages <= 1) { $p.html('<span style="color:#6b7280;font-size:13px;">共 '+total+' 条</span>'); return; }
+    var h = '<span style="color:#6b7280;font-size:13px;margin-right:12px;">共 '+total+' 条</span>';
+    h += '<button class="page-btn" id="pgPrev"'+(curPage<=1?' disabled':'')+'>上一页</button>';
+    var s=Math.max(1,curPage-2), e=Math.min(totalPages,s+4);
+    if(e-s<4) s=Math.max(1,e-4);
+    for(var i=s;i<=e;i++) h+='<button class="page-btn'+(i===curPage?' active':'')+'" data-p="'+i+'">'+i+'</button>';
+    h+='<button class="page-btn" id="pgNext"'+(curPage>=totalPages?' disabled':'')+'>下一页</button>';
+    $p.html(h);
+}
+
+function showErr(msg) {
+    $('#orderTbody').html('<tr class="loading-row"><td colspan="9" style="color:#ef4444;">'+msg+'</td></tr>');
+}
+
+// ---------- 查看订单详情 ----------
+function viewDetail(orderId) {
+    $.ajax({
+        url: '/api/v1/order/detail/' + orderId, type:'GET', headers:H(),
+        success: function(r) {
+            if (r.code !== 200) { alert(r.msg); return; }
+            var o = r.data.order, details = r.data.details || [], pays = r.data.payments || [];
+            var st = STATUS_LABEL[o.payStatus] || '未知';
+            var h = '<div class="detail-section"><h4>基本信息</h4>' +
+                '<div class="info-kv">' +
+                '<div><label>订单号：</label>'+esc(o.orderId)+'</div>' +
+                '<div><label>状态：</label>'+esc(st)+'</div>' +
+                '<div><label>收货人：</label>'+esc(o.receiverName||'-')+'</div>' +
+                '<div><label>手机号：</label>'+esc(o.receiverPhone||'-')+'</div>' +
+                '<div><label>地址：</label>'+(o.receiverAddr||'-')+'</div>' +
+                '<div><label>订单金额：</label><b style="color:#3b82f6;">¥'+Number(o.orderAmount||0).toFixed(2)+'</b></div>' +
+                '<div><label>订单类型：</label>'+esc(ORDER_TYPE[o.orderType]||'-')+'</div>' +
+                '<div><label>交易类型：</label>'+esc(TRADE_TYPE[o.tradeType]||'-')+'</div>' +
+                '<div><label>下单时间：</label>'+fmtTime(o.createTime)+'</div>' +
+                (o.remark ? '<div style="grid-column:span 2"><label>备注：</label>'+esc(o.remark)+'</div>' : '') +
+                '</div></div>';
+
+            if (details.length) {
+                h += '<div class="detail-section"><h4>商品明细</h4>' +
+                    '<table class="detail-table"><thead><tr><th>规格ID</th><th>数量</th><th>单价</th><th>小计</th></tr></thead><tbody>';
+                details.forEach(function(d) {
+                    h += '<tr><td>'+d.specId+'</td><td>'+d.saleQuantity+'</td>' +
+                        '<td>¥'+Number(d.salePrice||0).toFixed(2)+'</td>' +
+                        '<td>¥'+Number(d.subtotal||0).toFixed(2)+'</td></tr>';
+                });
+                h += '</tbody></table></div>';
+            }
+
+            if (pays.length) {
+                var PAY = {1:'微信',2:'支付宝',3:'现金'};
+                h += '<div class="detail-section"><h4>支付记录</h4>' +
+                    '<table class="detail-table"><thead><tr><th>支付方式</th><th>金额</th><th>时间</th></tr></thead><tbody>';
+                pays.forEach(function(p) {
+                    h += '<tr><td>'+(PAY[p.payMethod]||'-')+'</td>' +
+                        '<td>¥'+Number(p.payAmount||0).toFixed(2)+'</td>' +
+                        '<td>'+fmtTime(p.createTime)+'</td></tr>';
+                });
+                h += '</tbody></table></div>';
+            }
+            $('#detailContent').html(h);
+            $('#modalDetail').addClass('show');
+        },
+        error: function(){ alert('加载详情失败'); }
+    });
+}
+
+// ---------- 订单操作 ----------
+function shipOrder(orderId) {
+    if (!confirm('确认标记该订单已发货/备货完毕？')) return;
+    $.ajax({
+        url: '/api/v1/order/ship/'+orderId, type:'PUT', headers:H(),
+        success:function(r){ if(r.code===200){ loadOrders(curPage); } else alert(r.msg); }
+    });
+}
+
+function completeOrder(orderId) {
+    if (!confirm('确认该订单已完成（客户已收货）？')) return;
+    $.ajax({
+        url: '/api/v1/order/complete/'+orderId, type:'PUT', headers:H(),
+        success:function(r){ if(r.code===200){ loadOrders(curPage); } else alert(r.msg); }
+    });
+}
+
+function cancelOrder(orderId) {
+    if (!confirm('确认取消该订单？取消后不可恢复')) return;
+    $.ajax({
+        url: '/api/v1/order/cancel/'+orderId, type:'PUT', headers:H(),
+        success:function(r){ if(r.code===200){ loadOrders(curPage); } else alert(r.msg); }
+    });
+}
+
+function openPay(orderId, amount) {
+    $('#payOrderId').val(orderId);
+    $('#payAmount').val('¥ ' + Number(amount).toFixed(2));
+    $('#payMethod').val('3');
+    $('#modalPay').addClass('show');
+}
+
+function submitPay() {
+    var orderId = $('#payOrderId').val();
+    var payMethod = parseInt($('#payMethod').val());
+    var amount = parseFloat($('#payAmount').val().replace('¥','').trim());
+    $.ajax({
+        url: '/api/v1/order/pay/'+orderId, type:'PUT',
+        headers: HJ(),
+        data: JSON.stringify({ payAmount: amount, payMethod: payMethod, operatorId: loginUser.userId||null }),
+        success:function(r){
+            if(r.code===200){ alert('收款成功！'); $('#modalPay').removeClass('show'); loadOrders(curPage); }
+            else alert('失败：'+r.msg);
+        },
+        error:function(){ alert('操作失败'); }
+    });
+}
+
+// ---------- 创建订单 - 商品行 ----------
+function addItemRow(preSpecId, preCode, preName, prePrice) {
+    var idx = itemIdx++;
+    var preVal = preCode ? (preCode+(preName?' — '+preName:'')) : '';
+    var h = '<div class="item-card" id="itemCard'+idx+'">' +
+        '<div class="item-grid">' +
+        '<div><label class="form-label" style="font-size:12px;">商品规格</label>' +
+        '<div class="spec-wrap">' +
+        '<input class="form-input f-spec-inp" placeholder="输入名称/编码搜索..." value="'+esc(preVal)+'" autocomplete="off">' +
+        '<input type="hidden" class="f-spec-id" value="'+(preSpecId||'')+'">'+
+        '<input type="hidden" class="f-spec-price" value="'+(prePrice||'')+'">'+
+        '<div class="spec-drop"></div>' +
+        '</div></div>' +
+        '<div><label class="form-label" style="font-size:12px;">数量</label>' +
+        '<input class="form-input f-qty" type="number" min="1" value="1" placeholder="数量"></div>' +
+        '<div><label class="form-label" style="font-size:12px;">单价(¥)</label>' +
+        '<input class="form-input f-price" type="number" step="0.01" min="0" value="'+(prePrice||'')+'" placeholder="单价"></div>' +
+        '<div style="padding-top:18px;"><button class="btn-rm" data-idx="'+idx+'">✕</button></div>' +
+        '</div></div>';
+    $('#orderItems').append(h);
+    initItemSpec($('#itemCard'+idx));
+    // 绑定计算合计
+    $('#itemCard'+idx).on('input','.f-qty,.f-price', calcTotal);
+    calcTotal();
+}
+
+function initItemSpec($card) {
+    var $inp = $card.find('.f-spec-inp');
+    var $hid = $card.find('.f-spec-id');
+    var $ph  = $card.find('.f-spec-price');
+    var $pr  = $card.find('.f-price');
+    var $drop = $card.find('.spec-drop');
+
+    $inp.on('input', function(){
+        $hid.val('');
+        var kw = $.trim($(this).val());
+        if (!kw) { $drop.hide().empty(); return; }
+        $.ajax({
+            url:'/api/v1/inventory/stock/list', type:'GET', headers:H(),
+            data:{ pageNum:1, pageSize:8, keyword:kw },
+            success:function(r){
+                if(r.code!==200||!(r.data.records||[]).length){ $drop.hide().empty(); return; }
+                var h='';
+                r.data.records.forEach(function(x){
+                    h+='<div class="spec-opt" data-id="'+x.specId+'" data-code="'+esc(x.specCode||'')+'" data-name="'+esc(x.productName||'')+'" data-price="'+x.unitPrice+'">' +
+                        '<b>'+esc(x.specCode||'-')+'</b> — '+esc(x.productName||'-')+
+                        '<span style="color:#6b7280;font-size:12px;"> 库存:'+x.stockQuantity+' 参考价:¥'+(x.unitPrice||0)+'</span>'+
+                        '</div>';
+                });
+                $drop.html(h).show();
+            }
+        });
+    });
+
+    $drop.on('click','.spec-opt',function(){
+        $hid.val($(this).data('id'));
+        $inp.val($(this).data('code')+' — '+$(this).data('name'));
+        var p = parseFloat($(this).data('price')||0);
+        $pr.val(p);
+        $ph.val(p);
+        $drop.hide().empty();
+        calcTotal();
+    });
+
+    $(document).on('click.itemDrop'+$card.attr('id'), function(e){
+        if(!$(e.target).closest('.spec-wrap').length) $drop.hide();
+    });
+}
+
+function calcTotal() {
+    var total = 0;
+    $('#orderItems .item-card').each(function(){
+        var qty = parseFloat($(this).find('.f-qty').val())||0;
+        var price = parseFloat($(this).find('.f-price').val())||0;
+        total += qty * price;
+    });
+    $('#totalAmount').text('¥'+total.toFixed(2));
+}
+
+function submitCreateOrder() {
+    var name = $.trim($('#cReceiverName').val());
+    var phone = $.trim($('#cReceiverPhone').val());
+    if (!name) { alert('请输入收货人姓名'); return; }
+    if (!phone) { alert('请输入手机号'); return; }
+
+    var items = [], ok = true;
+    $('#orderItems .item-card').each(function(){
+        var specId = $(this).find('.f-spec-id').val();
+        var qty = parseInt($(this).find('.f-qty').val());
+        var price = parseFloat($(this).find('.f-price').val());
+        if (!specId) { alert('请选择商品规格（点击搜索结果选择）'); ok=false; return false; }
+        if (!qty||qty<1) { alert('请输入有效数量'); ok=false; return false; }
+        if (isNaN(price)||price<0) { alert('请输入有效单价'); ok=false; return false; }
+        items.push({ specId:parseInt(specId), saleQuantity:qty, salePrice:price });
+    });
+    if (!ok) return;
+    if (!items.length) { alert('请至少添加一件商品'); return; }
+
+    var body = {
+        userId: loginUser.userId || null,
+        orderType: 2, // 线下录入
+        tradeType: parseInt($('#cTradeType').val()),
+        receiverName: name,
+        receiverPhone: phone,
+        receiverAddr: $.trim($('#cReceiverAddr').val()) || null,
+        remark: $.trim($('#cRemark').val()) || null,
+        items: items
+    };
+
+    $.ajax({
+        url:'/api/v1/order/create', type:'POST', headers:HJ(),
+        data: JSON.stringify(body),
+        success:function(r){
+            if(r.code===200){
+                var newOrderId = r.data.orderId;
+                if(confirm('订单创建成功！订单号：'+newOrderId+'\n\n是否立即录入收款？')){
+                    $('#modalCreate').removeClass('show');
+                    // 打开支付弹窗
+                    var total = parseFloat($('#totalAmount').text().replace('¥',''));
+                    openPay(newOrderId, total);
+                } else {
+                    $('#modalCreate').removeClass('show');
+                    loadOrders(1);
+                }
+            } else {
+                alert('创建失败：'+r.msg);
+            }
+        },
+        error:function(){ alert('提交失败，请检查网络'); }
+    });
+}
+
+// ---------- 事件绑定 ----------
+$(function() {
+    loadUserInfo();
+    loadOrders(1);
+
+    $('#searchInput').on('keypress', function(e){ if(e.which===13) loadOrders(1); });
+    $('#btnSearch').click(function(){ loadOrders(1); });
+    $('#btnReset').click(function(){
+        $('#searchInput,#dateStart,#dateEnd').val('');
+        $('#filterStatus,#filterOrderType,#filterTradeType').val('');
+        loadOrders(1);
+    });
+
+    // 创建订单
+    $('#btnCreateOrder').click(function(){
+        $('#cReceiverName,#cReceiverPhone,#cReceiverAddr,#cRemark').val('');
+        $('#cTradeType').val('2');
+        $('#orderItems').empty(); itemIdx=0;
+        addItemRow();
+        calcTotal();
+        $('#modalCreate').addClass('show');
+    });
+    $('#btnAddItem').click(function(){ addItemRow(); });
+    $('#orderItems').on('click','.btn-rm',function(){
+        $('#itemCard'+$(this).data('idx')).remove(); calcTotal();
+    });
+    $('#btnCancelCreate').click(function(){ $('#modalCreate').removeClass('show'); });
+    $('#btnSubmitCreate').click(submitCreateOrder);
+
+    // 详情
+    $('#orderTbody').on('click','.btnView',function(){ viewDetail($(this).data('id')); });
+    $('#btnCloseDetail').click(function(){ $('#modalDetail').removeClass('show'); });
+
+    // 支付
+    $('#btnCancelPay').click(function(){ $('#modalPay').removeClass('show'); });
+    $('#btnConfirmPay').click(submitPay);
+
+    // 分页
+    $('#pagination').on('click','.page-btn',function(){
+        if($(this).prop('disabled')) return;
+        var id=$(this).attr('id');
+        if(id==='pgPrev') loadOrders(curPage-1);
+        else if(id==='pgNext') loadOrders(curPage+1);
+        else loadOrders(parseInt($(this).data('p')));
+    });
+
+    // 遮罩关闭
+    $('.modal-overlay').click(function(e){
+        if($(e.target).hasClass('modal-overlay')) $(this).removeClass('show');
+    });
+});
+
+function HJ() { return Object.assign(H(),{'Content-Type':'application/json'}); }
+</script>
+</body>
+</html>

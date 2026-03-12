@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 库存管理</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==0){window.location.href='../../index.html';}}());</script>
+    <style>
+        .pagination{padding:16px;text-align:right}
+        .page-btn{min-width:34px;height:34px;padding:0 8px;border-radius:8px;border:1px solid #e5eaf3;background:#fff;cursor:pointer;font-size:13px;margin:0 2px}
+        .page-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+        .page-btn:disabled{opacity:.5;cursor:not-allowed}
+        .loading-row td{text-align:center;color:#9ca3af;padding:40px}
+        .search-wrap{position:relative}
+        .search-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;max-height:360px;overflow-y:auto;margin-top:4px}
+        .search-dropdown.show{display:block}
+        .sd-group-title{padding:8px 14px;font-size:12px;font-weight:600;color:#6b7280;background:#f9fafb;border-bottom:1px solid #f3f4f6}
+        .sd-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid #f8f9fb;display:flex;justify-content:space-between;align-items:center}
+        .sd-item:hover{background:#f0f9ff}
+        .sd-empty{padding:20px;text-align:center;color:#9ca3af;font-size:13px}
+        .sd-tag{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="brand"><div class="brand-title">五金产品销售管理系统</div><div class="brand-sub">店主端</div></div>
+        <div class="nav">
+            <a href="owner_console.html" class="nav-item"><i class="fas fa-tachometer-alt nav-ico"></i><span class="nav-text">控制台首页</span></a>
+            <a href="product_manager.html" class="nav-item"><i class="fas fa-box nav-ico"></i><span class="nav-text">商品管理</span></a>
+            <a href="inventory_manager.html" class="nav-item active"><i class="fas fa-warehouse nav-ico"></i><span class="nav-text">库存管理</span></a>
+            <a href="order_manager.html" class="nav-item"><i class="fas fa-shopping-cart nav-ico"></i><span class="nav-text">订单管理</span></a>
+            <a href="user_manager.html" class="nav-item"><i class="fas fa-users nav-ico"></i><span class="nav-text">用户管理</span></a>
+            <a href="data_analysis.html" class="nav-item"><i class="fas fa-chart-line nav-ico"></i><span class="nav-text">数据统计</span></a>
+        </div>
+    </div>
+    <div class="main">
+        <div class="topbar">
+            <h1 class="page-title">库存管理</h1>
+            <div class="topbar-right">
+                <div class="search search-wrap">
+                    <input type="text" id="globalSearch" placeholder="搜索商品名称、编码、规格..." autocomplete="off">
+                    <div class="search-dropdown" id="searchDropdown"></div>
+                </div>
+                <a href="owner_profile.html" class="user-info" style="text-decoration:none;color:inherit;cursor:pointer;" title="个人信息">
+                    <span id="adminName" style="margin-right:10px;font-size:14px;">管理员</span>
+                    <img id="adminAvatar" src="../../images/avatar/default.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+        <div class="content">
+            <div class="panel">
+                <div class="toolbar">
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-primary" disabled><i class="fas fa-plus btn-ico"></i> 新增入库</button>
+                        <button class="btn" style="background:#ffe9ea;color:#d32f2f;" disabled><i class="fas fa-minus btn-ico"></i> 报损出库</button>
+                    </div>
+                    <div class="filter">
+                        <span>库存状态：</span>
+                        <select class="select" id="filterWarn">
+                            <option value="">全部状态</option>
+                            <option value="1">库存预警</option>
+                            <option value="0">正常库存</option>
+                        </select>
+                        <button class="btn btn-primary" id="btnFilter"><i class="fas fa-search"></i> 筛选</button>
+                        <button class="btn" style="background:#f3f4f6;color:#374151;" id="btnReset">重置</button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr>
+                            <th>规格编码</th><th>商品名称</th><th>规格</th><th>材质</th><th>单位</th>
+                            <th>当前库存</th><th>预警阈值</th><th>库存状态</th><th>操作</th>
+                        </tr></thead>
+                        <tbody id="stockTableBody">
+                            <tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../../js/jquery-3.7.1.min.js"></script>
+<script>
+var loginUser={};try{loginUser=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){}
+var TOKEN=loginUser.token||'',currentPage=1,totalPages=1;
+function H(){return{'Authorization':'Bearer '+TOKEN};}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtTime(t){if(!t)return'-';return new Date(t).toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');}
+
+function loadAdminInfo(){
+    $('#adminName').text(loginUser.username||'管理员');
+    var av=loginUser.avatar||'';if(av.startsWith('./'))av=av.replace('./','../../');if(av.startsWith('/images/'))av='../..'+av;if(av)$('#adminAvatar').attr('src',av);
+}
+
+function loadStock(page){
+    currentPage=page||1;
+    var kw=$.trim($('#globalSearch').val()),warn=$('#filterWarn').val();
+    var p={pageNum:currentPage,pageSize:10};
+    if(kw)p.keyword=kw;
+    if(warn==='1')p.warnOnly=true;
+    if(warn==='0')p.warnOnly=false;
+
+    $('#stockTableBody').html('<tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>');
+    $.ajax({url:'/api/v1/inventory/stock/list',type:'GET',headers:H(),data:p,
+        success:function(r){
+            if(r.code!==200){$('#stockTableBody').html('<tr class="loading-row"><td colspan="9" style="color:#ef4444;">加载失败</td></tr>');return;}
+            totalPages=r.data.pages||1;renderStock(r.data.records||[],r.data.total||0);renderPagination(r.data.total||0);
+        },error:function(){$('#stockTableBody').html('<tr class="loading-row"><td colspan="9" style="color:#ef4444;">加载失败</td></tr>');}
+    });
+}
+
+function renderStock(recs,total){
+    if(!recs.length){$('#stockTableBody').html('<tr class="loading-row"><td colspan="9">暂无库存数据</td></tr>');return;}
+    var h='';recs.forEach(function(r){
+        var statusTag=r.isWarning?'<span class="tag tag-wait">库存预警</span>':'<span class="tag tag-on">正常库存</span>';
+        h+='<tr><td style="font-size:12px;color:#6b7280;">'+esc(r.specCode||'-')+'</td><td style="font-weight:600;">'+esc(r.productName||'-')+'</td><td>'+esc(r.size||'-')+'</td><td>'+esc(r.material||'-')+'</td><td>'+esc(r.unit||'-')+'</td><td style="font-weight:700;'+(r.isWarning?'color:#dc2626;':'')+'">'+
+        (r.stockQuantity!=null?r.stockQuantity:'-')+'</td><td>'+(r.warningThreshold!=null?r.warningThreshold:'-')+'</td><td>'+statusTag+'</td><td class="ops"><button class="btn btn-edit" style="width:44px;" disabled>入库</button></td></tr>';
+    });$('#stockTableBody').html(h);
+}
+
+function renderPagination(total){
+    var $p=$('#pagination');if(totalPages<=1){$p.html('<span style="color:#6b7280;font-size:13px;">共 '+total+' 条</span>');return;}
+    var h='<span style="color:#6b7280;font-size:13px;margin-right:12px;">共 '+total+' 条</span><button class="page-btn" id="prevPage" '+(currentPage<=1?'disabled':'')+'>上一页</button>';
+    var s=Math.max(1,currentPage-2),e=Math.min(totalPages,s+4);if(e-s<4)s=Math.max(1,e-4);
+    for(var i=s;i<=e;i++)h+='<button class="page-btn '+(i===currentPage?'active':'')+'" data-page="'+i+'">'+i+'</button>';
+    h+='<button class="page-btn" id="nextPage" '+(currentPage>=totalPages?'disabled':'')+'>下一页</button>';$p.html(h);
+}
+
+// 全局搜索
+var searchTimer=null;
+$('#globalSearch').on('input',function(){var kw=$.trim($(this).val());if(!kw){$('#searchDropdown').removeClass('show').empty();return;}clearTimeout(searchTimer);searchTimer=setTimeout(function(){doSearch(kw);},300);});
+$('#globalSearch').on('keypress',function(e){if(e.which===13)loadStock(1);});
+
+function doSearch(kw){
+    var $d=$('#searchDropdown');$d.html('<div class="sd-empty"><i class="fas fa-spinner fa-spin"></i> 搜索中...</div>').addClass('show');
+    var p1=$.ajax({url:'/api/v1/order/list',type:'GET',headers:H(),data:{pageNum:1,pageSize:3,keyword:kw}});
+    var p2=$.ajax({url:'/api/v1/product/list',type:'GET',headers:H(),data:{pageNum:1,pageSize:3,keyword:kw}});
+    var p3=$.ajax({url:'/api/v1/inventory/stock/list',type:'GET',headers:H(),data:{pageNum:1,pageSize:3,keyword:kw}});
+    $.when(p1,p2,p3).done(function(r1,r2,r3){
+        var h='',has=false;
+        var os=(r1[0].code===200&&r1[0].data.records)?r1[0].data.records:[];
+        if(os.length){has=true;h+='<div class="sd-group-title"><i class="fas fa-shopping-cart" style="margin-right:6px;"></i>订单</div>';os.forEach(function(o){h+='<div class="sd-item" onclick="window.location.href=\'order_manager.html\'"><span><b>'+esc(o.orderId)+'</b> - '+esc(o.receiverName||'')+'</span><span class="sd-tag" style="background:#fff7ed;color:#ea580c;">¥'+Number(o.orderAmount||0).toFixed(2)+'</span></div>';});}
+        var ps=(r2[0].code===200&&r2[0].data.records)?r2[0].data.records:[];
+        if(ps.length){has=true;h+='<div class="sd-group-title"><i class="fas fa-box" style="margin-right:6px;"></i>商品</div>';ps.forEach(function(p){h+='<div class="sd-item" onclick="window.location.href=\'product_manager.html\'"><span><b>'+esc(p.productName)+'</b>'+(p.brand?' - '+esc(p.brand):'')+'</span></div>';});}
+        var ss=(r3[0].code===200&&r3[0].data.records)?r3[0].data.records:[];
+        if(ss.length){has=true;h+='<div class="sd-group-title"><i class="fas fa-warehouse" style="margin-right:6px;"></i>库存</div>';ss.forEach(function(s){var ws=s.isWarning?'background:#fef2f2;color:#dc2626;':'background:#d1fae5;color:#065f46;';h+='<div class="sd-item" onclick="window.location.href=\'inventory_manager.html\'"><span><b>'+esc(s.specCode||'-')+'</b> - '+esc(s.productName||'-')+'</span><span class="sd-tag" style="'+ws+'">库存:'+s.stockQuantity+'</span></div>';});}
+        if(!has)h='<div class="sd-empty">未找到相关结果</div>';$d.html(h);
+    }).fail(function(){$d.html('<div class="sd-empty" style="color:#ef4444;">搜索失败</div>');});
+}
+$(document).on('click',function(e){if(!$(e.target).closest('.search-wrap').length)$('#searchDropdown').removeClass('show');});
+
+$(function(){
+    loadAdminInfo();loadStock(1);
+    $('#btnFilter').click(function(){loadStock(1);});
+    $('#btnReset').click(function(){$('#globalSearch').val('');$('#filterWarn').val('');loadStock(1);});
+    $('#pagination').on('click','.page-btn',function(){if($(this).prop('disabled'))return;if($(this).attr('id')==='prevPage')loadStock(currentPage-1);else if($(this).attr('id')==='nextPage')loadStock(currentPage+1);else loadStock(parseInt($(this).data('page')));});
+});
+</script>
+</body>
+</html>

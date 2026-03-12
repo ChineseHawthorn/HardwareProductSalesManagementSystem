@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 首页</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/Swiper/8.4.7/swiper-bundle.min.css">
+    <script src="../../js/jquery-3.7.1.min.js"></script>
+    <style>
+        /* 购物车角标 */
+        .cart-badge {
+            display: inline-block; min-width: 16px; height: 16px; line-height: 16px;
+            background: #c00; color: #fff; border-radius: 8px; font-size: 11px;
+            text-align: center; padding: 0 4px; margin-left: 2px; vertical-align: middle;
+        }
+        .cart-badge[data-count="0"] { display: none; }
+
+        /* 分类筛选 */
+        .category-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            margin: 16px 0 0; padding-bottom: 12px; border-bottom: 1px solid #eee;
+        }
+        .cat-tab {
+            padding: 5px 16px; border: 1px solid #ddd; border-radius: 16px; font-size: 13px;
+            cursor: pointer; color: #555; background: #fff; transition: all .2s;
+        }
+        .cat-tab.active, .cat-tab:hover { background: #c00; color: #fff; border-color: #c00; }
+
+        /* 商品卡片 */
+        .product-card { position: relative; border: 1px solid #eee; border-radius: 5px; overflow: hidden; transition: all .3s; background: #fff; }
+        .product-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.12); transform: translateY(-4px); }
+        .product-img-wrap { position: relative; overflow: hidden; height: 200px; }
+        .product-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .fav-btn {
+            position: absolute; top: 8px; right: 8px;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,.85); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 16px;
+            transition: all .2s; z-index: 2;
+        }
+        .fav-btn:hover { background: #fff; transform: scale(1.1); }
+        .fav-btn.active { color: #c00; }
+        .product-info { padding: 12px 14px 14px; }
+        .product-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #222; }
+        .product-brand { font-size: 12px; color: #999; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .product-price { font-size: 18px; color: #c00; font-weight: bold; margin-bottom: 6px; }
+        .product-price .unit { font-size: 12px; font-weight: normal; color: #999; }
+        .product-stock { font-size: 12px; color: #333; margin-bottom: 12px; }
+        .add-cart { display: block; width: 100%; height: 34px; line-height: 34px; text-align: center; background: #c00; color: #fff; border-radius: 3px; font-size: 13px; border: none; cursor: pointer; }
+        .add-cart:hover { background: #a00; }
+        .add-cart:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* 商品区容器 */
+        .products-section { margin: 28px 0; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; height: 40px; border-bottom: 2px solid #c00; margin-bottom: 16px; }
+        .section-header h3 { color: #c00; font-size: 18px; }
+        .section-header .more-link { font-size: 13px; color: #888; cursor: pointer; }
+        .section-header .more-link:hover { color: #c00; }
+
+        /* 分页 */
+        .product-pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; }
+        .p-btn { padding: 5px 12px; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; background: #fff; font-size: 13px; color: #555; }
+        .p-btn:hover:not(:disabled) { border-color: #c00; color: #c00; }
+        .p-btn.cur { background: #c00; color: #fff; border-color: #c00; }
+        .p-btn:disabled { color: #ccc; cursor: not-allowed; }
+
+        /* Toast 提示 */
+        #toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 22px; border-radius: 20px; font-size: 14px; z-index: 9999; display: none; }
+
+        .no-product { text-align: center; padding: 50px 0; color: #aaa; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo">五金产品销售管理系统</div>
+            <ul class="nav-menu">
+                <li><a href="consumer_index.html" class="active">首页</a></li>
+                <li><a href="consumer_category.html">分类</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索商品名称、品牌或型号...">
+                    <button id="searchBtn">搜索</button>
+                </div>
+                <span id="userNameDisplay" style="color:#333;font-size:14px;font-weight:bold;">用户名</span>
+                <div class="user-op">
+                    <div class="avatar-container" id="userAvatar"
+                         title="点击查看个人中心"
+                         style="cursor:pointer;"
+                         onclick="window.location.href='user_profile.html'">
+                        <img src="../../images/avatar/default.png" alt="用户头像" class="avatar-img">
+                    </div>
+                    <a href="favorites.html"><span class="icon">❤️</span>收藏</a>
+                    <a href="cart.html" id="cartNavLink"><span class="icon">🛒</span>购物车<span class="cart-badge" id="cartBadge" data-count="0">0</span></a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- 轮播图 -->
+<div class="container">
+    <div class="parallax-swiper swiper">
+
+        <div class="swiper-wrapper">
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('../../images/basic/carousel/001.png')" data-swiper-parallax="-23%"></div>
+            </div>
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('../../images/basic/carousel/002.png')" data-swiper-parallax="-23%"></div>
+            </div>
+            <div class="swiper-slide">
+                <div class="parallax-bg" style="background-image:url('../../images/basic/carousel/003.png')" data-swiper-parallax="-23%"></div>
+            </div>
+        </div>
+        <div class="swiper-pagination"></div>
+    </div>
+</div>
+
+<!-- 热销商品推荐 -->
+<div class="container">
+    <div class="products-section">
+        <div class="section-header">
+            <h3>热销商品推荐</h3>
+            <span style="font-size:13px;color:#888;">按近期购买量排序</span>
+        </div>
+        <div class="product-list" id="hotGrid">
+            <div class="no-product">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 特价商品 -->
+<div class="container">
+    <div class="products-section">
+        <div class="section-header">
+            <h3>特价商品</h3>
+            <span style="font-size:13px;color:#888;">低价优选</span>
+        </div>
+        <div class="product-list" id="cheapGrid">
+            <div class="no-product">加载中...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4>关于我们</h4>
+                <p>五金产品销售管理系统是一款面向五金行业的全流程商品管理平台，为五金企业店主、店员及消费者提供专业、高效的数字化服务。</p>
+            </div>
+            <div class="footer-contact">
+                <h4>联系我们</h4>
+                <p>客服电话：123-456-7890</p>
+                <p>工作时间：周一至周日 9:00-21:00</p>
+                <p>联系地址：火星</p>
+                <p>邮箱：service@wujin.com</p>
+            </div>
+        </div>
+        <div class="copyright">© 2025 五金产品销售管理系统</div>
+    </div>
+</footer>
+
+<!-- Toast 提示 -->
+<div id="toast"></div>
+
+<!-- 登录弹窗 -->
+<div class="modal-mask" id="loginModal">
+    <div class="modal-container">
+        <button class="modal-close" id="loginClose">×</button>
+        <form class="login_form" id="loginForm">
+            <div class="login-title">用户登录</div>
+            <div class="list-item">
+                <div class="lable">账号：</div>
+                <input type="text" id="username" placeholder="请输入账号">
+            </div>
+            <div class="list-item">
+                <div class="lable">密码：</div>
+                <div class="password-box">
+                    <input type="password" id="password" placeholder="请输入密码">
+                    <button type="button" id="togglePassword" class="toggle-password"><i class="fa-solid fa-eye-slash"></i></button>
+                </div>
+            </div>
+            <div id="loginMessage" class="message"></div>
+            <div class="list-btn">
+                <button type="button" class="login_btn" id="loginBtn">登录</button>
+                <button type="button" class="login_btn" id="toRegistBtn">注册</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 注册弹窗 -->
+<div class="modal-mask" id="registModal">
+    <div class="modal-container">
+        <button class="modal-close" id="registClose">×</button>
+        <form class="register_form" id="registForm">
+            <div class="register-title">用户注册</div>
+            <div id="registMessage" class="message"></div>
+            <div class="form-group"><label>用户名：</label><input type="text" id="registUsername" placeholder="请输入用户名"></div>
+            <div class="form-group"><label>密码：</label><input type="password" id="registPassword" placeholder="请输入至少6位密码"></div>
+            <div class="form-group"><label>手机号：</label><input type="text" id="registPhone" placeholder="请输入11位手机号"></div>
+            <div class="form-group"><label>真实姓名（可选）：</label><input type="text" id="registRealName" placeholder="请输入真实姓名"></div>
+            <div class="btn-group">
+                <button type="button" class="register_btn" id="doRegistBtn">提交注册</button>
+                <button type="button" class="back_btn" id="backToLoginBtn">返回登录</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="../../js/swiper-bundle.min.js"></script>
+<script>
+// ===== 工具函数 =====
+function getToken() {
+    try { return JSON.parse(localStorage.getItem('loginUser') || '{}').token || ''; } catch { return ''; }
+}
+function getLoginUser() {
+    try { return JSON.parse(localStorage.getItem('loginUser') || '{}'); } catch { return {}; }
+}
+function isLoggedIn() { return !!getToken(); }
+function authHeader() { return { 'Authorization': 'Bearer ' + getToken() }; }
+
+function showToast(msg, duration) {
+    const $t = $('#toast');
+    $t.text(msg).fadeIn(200);
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => $t.fadeOut(300), duration || 1800);
+}
+
+function resolveImg(url) {
+    if (!url) return '../../images/avatar/default.png';
+    if (url.startsWith('/images/')) return '../..' + url;
+    if (url.startsWith('./images/')) return '../../' + url.replace('./', '');
+    if (url.startsWith('images/')) return '../../' + url;
+    return url;
+}
+
+// ===== 全局状态 =====
+let favoriteIds = new Set();
+
+// ===== 初始化 =====
+$(function() {
+    // 未登录或非消费者则跳回首页
+    const _u = getLoginUser();
+    if (!_u.token || _u.roleId !== 2) { window.location.href = '../../index.html'; return; }
+
+    loadUserInfo();
+    loadFavoriteIds();
+    loadCartCount();
+    loadHotProducts();
+    loadCheapestProducts();
+
+    // 搜索框回车/点击 → 跳转分类页
+    $('#searchBtn').on('click', function() {
+        const kw = $.trim($('#searchInput').val());
+        if (kw) window.location.href = 'category.html?keyword=' + encodeURIComponent(kw);
+    });
+    $('#searchInput').on('keypress', function(e) {
+        if (e.which === 13) $('#searchBtn').trigger('click');
+    });
+});
+
+// ===== 加载用户信息 =====
+function loadUserInfo() {
+    const u = getLoginUser();
+    $('#userNameDisplay').text(u.username || '');
+    const avatarImg = document.querySelector('#userAvatar .avatar-img');
+    if (avatarImg && u.avatar) {
+        avatarImg.src = resolveImg(u.avatar);
+    }
+}
+
+// ===== 加载热销商品 =====
+function loadHotProducts() {
+    $('#hotGrid').html('<div class="no-product">加载中...</div>');
+    $.get('/api/v1/product/hot?limit=8', function(res) {
+        if (res.code !== 200 || !res.data || !res.data.length) {
+            $('#hotGrid').html('<div class="no-product">暂无热销商品</div>'); return;
+        }
+        renderProductGrid(res.data, '#hotGrid');
+    }).fail(function() { $('#hotGrid').html('<div class="no-product">加载失败</div>'); });
+}
+
+// ===== 加载特价商品 =====
+function loadCheapestProducts() {
+    $('#cheapGrid').html('<div class="no-product">加载中...</div>');
+    $.get('/api/v1/product/list?isOnSale=1&pageSize=20&pageNum=1', function(res) {
+        if (res.code !== 200 || !res.data || !res.data.records || !res.data.records.length) {
+            $('#cheapGrid').html('<div class="no-product">暂无特价商品</div>'); return;
+        }
+        const sorted = (res.data.records)
+            .filter(p => p.minPrice != null)
+            .sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice))
+            .slice(0, 8);
+        renderProductGrid(sorted, '#cheapGrid');
+    }).fail(function() { $('#cheapGrid').html('<div class="no-product">加载失败</div>'); });
+}
+
+// ===== 渲染商品卡片（container: CSS选择器） =====
+function renderProductGrid(records, container) {
+    let html = '';
+    records.forEach(function(p) {
+        const isFav = favoriteIds.has(p.productId);
+        const noStock = !p.totalStock || p.totalStock <= 0;
+        const imgSrc = p.mainImage ? resolveImg(p.mainImage) : '../../images/avatar/default.png';
+        const price = p.minPrice != null ? '¥' + parseFloat(p.minPrice).toFixed(2) : '价格待定';
+        const unit = p.unit ? '/' + p.unit : '';
+        let stockHtml = noStock ? '<span class="stock-out">已售罄</span>'
+            : (p.totalStock <= 50 ? '<span class="stock-low">库存紧张（' + p.totalStock + (p.unit||'') + '）</span>'
+            : '<span class="stock-high">库存充足</span>');
+        const brand = (p.brand || p.model) ? ((p.brand||'') + (p.model ? ' ' + p.model : '')) : '&nbsp;';
+        html += '<div class="product-card" data-pid="' + p.productId + '" data-specid="' + (p.firstSpecId||'') + '" data-stock="' + (p.totalStock||0) + '">'
+            + '<div class="product-img-wrap">'
+            + '<img src="' + imgSrc + '" alt="' + p.productName + '" class="product-img" onerror="this.src=\'../../images/avatar/default.png\'">'
+            + '<button class="fav-btn' + (isFav?' active':'') + '" title="' + (isFav?'取消收藏':'收藏') + '">' + (isFav?'❤️':'🤍') + '</button>'
+            + '</div><div class="product-info">'
+            + '<h4 class="product-name" title="' + p.productName + '">' + p.productName + '</h4>'
+            + '<p class="product-brand">' + brand + '</p>'
+            + '<div class="product-price">' + price + '<span class="unit">' + unit + '</span></div>'
+            + '<p class="product-stock">' + stockHtml + '</p>'
+            + '<button class="add-cart"' + (noStock?' disabled':'') + '>' + (noStock?'暂时缺货':'加入购物车') + '</button>'
+            + '</div></div>';
+    });
+    $(container).html(html);
+    bindCardEvents(container);
+}
+
+// ===== 加载收藏ID集合 =====
+function loadFavoriteIds() {
+    if (!isLoggedIn()) return;
+    $.ajax({ url: '/api/v1/favorite/ids', headers: authHeader(), success: function(res) {
+        if (res.code === 200) favoriteIds = new Set(res.data);
+    }});
+}
+
+// ===== 加载购物车数量 =====
+function loadCartCount() {
+    if (!isLoggedIn()) return;
+    $.ajax({ url: '/api/v1/cart/count', headers: authHeader(), success: function(res) {
+        if (res.code === 200) {
+            const cnt = res.data || 0;
+            const $b = $('#cartBadge');
+            $b.text(cnt).attr('data-count', cnt);
+            $b.toggle(cnt > 0);
+        }
+    }});
+}
+
+// ===== 绑定卡片事件（container: CSS选择器） =====
+function bindCardEvents(container) {
+    // 收藏
+    $(container + ' .fav-btn').on('click', function(e) {
+        e.stopPropagation();
+        const $card = $(this).closest('.product-card');
+        const productId = $card.data('pid');
+        const $btn = $(this);
+        $.ajax({
+            url: '/api/v1/favorite/toggle/' + productId, type: 'POST', headers: authHeader(),
+            success: function(res) {
+                const isFav = res.data === true;
+                if (isFav) { favoriteIds.add(productId); $btn.addClass('active').html('❤️').attr('title', '取消收藏'); }
+                else { favoriteIds.delete(productId); $btn.removeClass('active').html('🤍').attr('title', '收藏'); }
+                showToast(isFav ? '已收藏' : '已取消收藏');
+            },
+            error: function() { showToast('操作失败，请重试'); }
+        });
+    });
+    // 加入购物车
+    $(container + ' .add-cart:not(:disabled)').on('click', function() {
+        const $card = $(this).closest('.product-card');
+        const specId = $card.data('specid');
+        if (!specId) { showToast('该商品暂无可用规格'); return; }
+        const $btn = $(this).prop('disabled', true).text('添加中...');
+        $.ajax({
+            url: '/api/v1/cart/add', type: 'POST',
+            headers: $.extend(authHeader(), { 'Content-Type': 'application/json' }),
+            data: JSON.stringify({ specId: specId, quantity: 1 }),
+            success: function(res) {
+                if (res.code === 200) { showToast('已加入购物车 🛒'); loadCartCount(); }
+                else { showToast(res.msg || '添加失败'); }
+            },
+            error: function() { showToast('操作失败，请重试'); },
+            complete: function() { $btn.prop('disabled', false).text('加入购物车'); }
+        });
+    });
+}
+
+// ===== 轮播图 =====
+const swiper = new Swiper('.parallax-swiper', {
+    speed: 600, parallax: true,
+    pagination: { el: '.swiper-pagination', clickable: true },
+    autoplay: { delay: 3000, disableOnInteraction: false },
+    loop: true,
+});
+
+// ===== 登录/注册弹窗 =====
+// （页面已需要登录才能访问，弹窗仅作为后备保留）
+$('#loginClose').on('click', function() { $('#loginModal').hide(); });
+$('#registClose').on('click', function() { $('#registModal').hide(); });
+$('#toRegistBtn').on('click', function() { $('#loginModal').hide(); $('#registModal').css('display','flex'); });
+$('#backToLoginBtn').on('click', function() { $('#registModal').hide(); $('#loginModal').css('display','flex'); });
+
+$('#loginBtn').on('click', function() {
+    const username = $.trim($('#username').val());
+    const password = $('#password').val();
+    if (!username || !password) { showMsg('loginMessage', '请输入账号和密码', 'error'); return; }
+    $.ajax({
+        url: '/api/v1/user/login', type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ username, password }),
+        success: function(res) {
+            if (res.code === 200) {
+                localStorage.setItem('loginUser', JSON.stringify(res.data));
+                location.reload();
+            } else {
+                showMsg('loginMessage', res.msg || '登录失败', 'error');
+            }
+        }
+    });
+});
+
+$('#doRegistBtn').on('click', function() {
+    const data = {
+        username: $.trim($('#registUsername').val()),
+        password: $('#registPassword').val(),
+        phone: $.trim($('#registPhone').val()),
+        realName: $.trim($('#registRealName').val())
+    };
+    if (!data.username || !data.password || !data.phone) { showMsg('registMessage', '请填写必填项', 'error'); return; }
+    $.ajax({
+        url: '/api/v1/user/regist', type: 'POST',
+        contentType: 'application/json', data: JSON.stringify(data),
+        success: function(res) {
+            if (res.code === 200) {
+                showMsg('registMessage', '注册成功，请登录', 'success');
+                setTimeout(function() { $('#registModal').hide(); $('#loginModal').css('display','flex'); }, 1200);
+            } else {
+                showMsg('registMessage', res.msg || '注册失败', 'error');
+            }
+        }
+    });
+});
+
+function showMsg(id, msg, type) {
+    $('#' + id).text(msg).removeClass('error success').addClass(type).show();
+}
+</script>
+</body>
+</html>

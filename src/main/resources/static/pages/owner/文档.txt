@@ -1,0 +1,3 @@
+商品编码为三位数形式的product_id
+订单号为ORDER+日期+order_id
+用户ID为U+四位数形式的user_id

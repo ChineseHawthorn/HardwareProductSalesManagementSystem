@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 五金商品管理平台</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==0){window.location.href='../../index.html';}}());</script>
+</head>
+<body>
+<div class="layout">
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店主端</div>
+        </div>
+        <div class="nav">
+            <a href="owner_console.html" class="nav-item">
+                <i class="fas fa-tachometer-alt nav-ico"></i>
+                <span class="nav-text">控制台首页</span>
+            </a>
+            <a href="product_manager.html" class="nav-item">
+                <i class="fas fa-box nav-ico"></i>
+                <span class="nav-text">商品管理</span>
+            </a>
+            <a href="inventory_manager.html" class="nav-item">
+                <i class="fas fa-warehouse nav-ico"></i>
+                <span class="nav-text">库存管理</span>
+            </a>
+            <a href="order_manager.html" class="nav-item">
+                <i class="fas fa-shopping-cart nav-ico"></i>
+                <span class="nav-text">订单管理</span>
+            </a>
+            <a href="user_manager.html" class="nav-item active">
+                <i class="fas fa-users nav-ico"></i>
+                <span class="nav-text">用户管理</span>
+            </a>
+            <a href="data_analysis.html" class="nav-item">
+                <i class="fas fa-chart-line nav-ico"></i>
+                <span class="nav-text">数据统计</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 右侧主体内容 -->
+    <div class="main">
+        <!-- 顶部栏 -->
+        <div class="topbar">
+            <h1 class="page-title">用户管理</h1>
+            <div class="topbar-right">
+                <div class="search">
+                    <input type="text" placeholder="搜索用户名、手机号、姓名...">
+                </div>
+                <div class="top-icon">
+                    <i class="fas fa-user" style="line-height: 38px; text-align: center; color: #666;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区 -->
+        <div class="content">
+            <!-- 标签切换 -->
+            <div style="display: flex; gap: 2px; margin-bottom: 16px;">
+                <button class="btn" style="background: #3b82f6; color: #fff; border: 1px solid #e5eaf3;">消费者管理</button>
+                <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">店员管理</button>
+                <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">供应商管理</button>
+            </div>
+
+            <!-- 工具条与筛选区 -->
+            <div class="panel">
+                <div class="toolbar">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus btn-ico"></i> 新增用户
+                        </button>
+                        <button class="btn" style="background: #f0f9ff; color: #2563eb;">
+                            <i class="fas fa-download btn-ico"></i> 导出用户
+                        </button>
+                        <button class="btn" style="background: #f0f9ff; color: #2563eb;">
+                            <i class="fas fa-history btn-ico"></i> 登录日志
+                        </button>
+                    </div>
+                    <div class="filter">
+                        <span>账号状态：</span>
+                        <select class="select">
+                            <option value="">全部状态</option>
+                            <option value="1">正常</option>
+                            <option value="0">禁用</option>
+                        </select>
+                        <span>注册时间：</span>
+                        <input type="date" class="select" style="width: 120px;">
+                        <span>至</span>
+                        <input type="date" class="select" style="width: 120px;">
+                        <button class="btn btn-primary">筛选</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用户列表 -->
+            <div class="panel">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th style="width: 60px;"><input type="checkbox"></th>
+                            <th>用户ID</th>
+                            <th>头像</th>
+                            <th>用户名</th>
+                            <th>真实姓名</th>
+                            <th>手机号</th>
+                            <th>累计消费</th>
+                            <th>账号状态</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>U10001</td>
+                            <td><img src="../../images/avatar/001.png" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></td>
+                            <td>zhangsan123</td>
+                            <td>张三</td>
+                            <td>138****1234</td>
+                            <td>¥12,580.00</td>
+                            <td><span class="tag tag-on">正常</span></td>
+                            <td>2024-03-15 10:23:45</td>
+                            <td class="ops">
+                                <button class="btn btn-edit">编辑</button>
+                                <button class="btn btn-del">禁用</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>U10002</td>
+                            <td><img src="../../images/avatar/001.png" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></td>
+                            <td>lisi456</td>
+                            <td>李四</td>
+                            <td>139****5678</td>
+                            <td>¥3,850.00</td>
+                            <td><span class="tag tag-on">正常</span></td>
+                            <td>2024-04-20 09:15:22</td>
+                            <td class="ops">
+                                <button class="btn btn-edit">编辑</button>
+                                <button class="btn btn-del">禁用</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>U10003</td>
+                            <td><img src="../../images/avatar/001.png" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;"></td>
+                            <td>wangwu789</td>
+                            <td>王五</td>
+                            <td>137****9012</td>
+                            <td>¥28,650.00</td>
+                            <td><span class="tag tag-off">禁用</span></td>
+                            <td>2024-02-10 08:40:15</td>
+                            <td class="ops">
+                                <button class="btn btn-edit">编辑</button>
+                                <button class="btn" style="background: #e8f7ea; color: #2e7d32;">启用</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div style="padding: 16px; text-align: right;">
+                    <span style="margin-right: 16px;">共 528 条数据</span>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">上一页</button>
+                    <button class="btn" style="background: #3b82f6; color: #fff;">1</button>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">2</button>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">3</button>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">...</button>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">53</button>
+                    <button class="btn" style="background: #fff; border: 1px solid #e5eaf3;">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+server:
+  port: 8081
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/hardware?serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8
+    username: root
+    password: 1234
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT 配置
+jwt:
+  secret: hardwareProductSalesManagementSystemSecretKey2026
+  expiration: 86400000   # 24小时（毫秒）
+
+# 文件上传路径配置
+upload:
+  avatar:
+    path: D:/Project/毕业设计/HardwareProductSalesManagementSystem/upload/images/avatar/
+    url: /images/avatar/**
+  product:
+    path: D:/Project/毕业设计/HardwareProductSalesManagementSystem/upload/images/hardware/
+    url: /images/hardware/**
+
+# 机器人助手配置
+deepseek:
+  apiKey: "sk-dxcrr15fcds5vcds" # 敏感信息
+  baseUrl: "https://api.deepseek.com"
+  # 提示语配置
+  systemPrompt: "你是一个机器人助手, 回答必须使用中文"
+  model: "deepseek-chat"

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品分类 - 五金产品销售管理系统</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/index.css">
+    <script src="../../js/jquery-3.7.1.min.js"></script>
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==2){window.location.href='../../index.html';}}());</script>
+    <style>
+        /* 分类页整体布局 */
+        .category-layout {
+            display: flex; gap: 20px; align-items: flex-start;
+            padding: 20px 0 40px;
+        }
+        /* 左侧分类侧边栏 */
+        .cat-sidebar {
+            width: 200px; flex-shrink: 0;
+            background: #fff; border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.07);
+            overflow-x: hidden; overflow-y: auto;
+            position: sticky; top: 82px;
+            max-height: calc(100vh - 100px);
+            align-self: flex-start;
+        }
+        .cat-sidebar-title {
+            background: #c00; color: #fff;
+            padding: 12px 16px; font-size: 14px; font-weight: bold;
+        }
+        .cat-group { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .cat-group:last-child { border-bottom: none; }
+        .cat-parent {
+            padding: 8px 16px; font-size: 14px; font-weight: 600;
+            color: #333; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            transition: color .2s;
+        }
+        .cat-parent:hover, .cat-parent.active { color: #c00; }
+        .cat-parent.active { background: #fff5f5; }
+        .cat-children { display: none; padding-left: 8px; }
+        .cat-children.open { display: block; }
+        .cat-child {
+            padding: 6px 16px 6px 24px; font-size: 13px;
+            color: #666; cursor: pointer; transition: color .2s;
+        }
+        .cat-child:hover, .cat-child.active { color: #c00; font-weight: 600; }
+        .cat-all {
+            padding: 10px 16px; font-size: 14px; font-weight: 600;
+            cursor: pointer; color: #c00; background: #fff5f5;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        /* 右侧商品区 */
+        .cat-main { flex: 1; min-width: 0; }
+        .cat-toolbar {
+            display: flex; gap: 10px; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .cat-search-box { display: flex; flex: 1; min-width: 200px; max-width: 400px; }
+        .cat-search-box input {
+            flex: 1; padding: 8px 12px; border: 1px solid #ddd;
+            border-right: none; border-radius: 3px 0 0 3px; font-size: 13px; outline: none;
+        }
+        .cat-search-box input:focus { border-color: #c00; }
+        .cat-search-box button {
+            padding: 8px 16px; background: #c00; color: #fff;
+            border: none; border-radius: 0 3px 3px 0; cursor: pointer; font-size: 13px;
+        }
+        .cat-search-box button:hover { background: #a00; }
+        .cat-breadcrumb { font-size: 13px; color: #888; }
+        .cat-breadcrumb span { color: #c00; }
+        /* 商品卡片（复用 consumer_index 样式） */
+        .product-card { position: relative; border: 1px solid #eee; border-radius: 5px; overflow: hidden; transition: all .3s; background: #fff; }
+        .product-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.12); transform: translateY(-4px); }
+        .product-img-wrap { position: relative; overflow: hidden; height: 200px; }
+        .product-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .fav-btn {
+            position: absolute; top: 8px; right: 8px;
+            width: 30px; height: 30px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,.85); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 16px; z-index: 2;
+        }
+        .fav-btn:hover { background: #fff; transform: scale(1.1); }
+        .fav-btn.active { color: #c00; }
+        .product-info { padding: 12px 14px 14px; }
+        .cat-tag { display: inline-block; font-size: 11px; color: #888; background: #f5f5f5; border-radius: 3px; padding: 1px 6px; margin-bottom: 6px; }
+        .product-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #222; }
+        .product-brand { font-size: 12px; color: #999; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .product-price { font-size: 18px; color: #c00; font-weight: bold; margin-bottom: 6px; }
+        .product-price .unit { font-size: 12px; font-weight: normal; color: #999; }
+        .product-stock { font-size: 12px; color: #333; margin-bottom: 12px; }
+        .add-cart { display: block; width: 100%; height: 34px; line-height: 34px; text-align: center; background: #c00; color: #fff; border-radius: 3px; font-size: 13px; border: none; cursor: pointer; }
+        .add-cart:hover { background: #a00; }
+        .add-cart:disabled { background: #ccc; cursor: not-allowed; }
+        /* 商品区结构 */
+        .section-header { display: flex; justify-content: space-between; align-items: center; height: 40px; border-bottom: 2px solid #c00; margin-bottom: 16px; }
+        .section-header h3 { color: #c00; font-size: 18px; }
+        .no-product { text-align: center; padding: 50px 0; color: #aaa; grid-column: 1/-1; }
+        /* 分页 */
+        .product-pagination { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px; }
+        .p-btn { padding: 5px 12px; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; background: #fff; font-size: 13px; color: #555; }
+        .p-btn:hover:not(:disabled) { border-color: #c00; color: #c00; }
+        .p-btn.cur { background: #c00; color: #fff; border-color: #c00; }
+        .p-btn:disabled { color: #ccc; cursor: not-allowed; }
+        /* Toast */
+        #toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.75); color: #fff; padding: 8px 22px; border-radius: 20px; font-size: 14px; z-index: 9999; display: none; }
+        /* 购物车角标 */
+        .cart-badge { display: inline-block; min-width: 16px; height: 16px; line-height: 16px; background: #c00; color: #fff; border-radius: 8px; font-size: 11px; text-align: center; padding: 0 4px; margin-left: 2px; vertical-align: middle; }
+        .cart-badge[data-count="0"] { display: none; }
+    </style>
+</head>
+<body>
+<!-- 顶部导航栏 -->
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo">五金产品销售管理系统</div>
+            <ul class="nav-menu">
+                <li><a href="consumer_index.html" class="active">首页</a></li>
+                <li><a href="consumer_category.html">分类</a></li>
+            </ul>
+            <div class="nav-right">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索商品名称、品牌或型号...">
+                    <button id="searchBtn">搜索</button>
+                </div>
+                <span id="userNameDisplay" style="color:#333;font-size:14px;font-weight:bold;">用户名</span>
+                <div class="user-op">
+                    <div class="avatar-container" id="userAvatar"
+                         title="点击查看个人中心"
+                         style="cursor:pointer;"
+                         onclick="window.location.href='user_profile.html'">
+                        <img src="../../images/avatar/default.png" alt="用户头像" class="avatar-img">
+                    </div>
+                    <a href="favorites.html"><span class="icon">❤️</span>收藏</a>
+                    <a href="cart.html" id="cartNavLink"><span class="icon">🛒</span>购物车<span class="cart-badge" id="cartBadge" data-count="0">0</span></a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- 主体 -->
+<div class="container">
+    <div class="category-layout">
+        <!-- 左侧分类树 -->
+        <div class="cat-sidebar">
+            <div class="cat-sidebar-title">商品分类</div>
+            <div class="cat-all" data-id="" data-name="全部商品">全部商品</div>
+            <div id="catTree"></div>
+        </div>
+
+        <!-- 右侧商品区 -->
+        <div class="cat-main">
+            <!-- 商品列表 -->
+            <div class="section-header">
+                <h3 id="sectionTitle">全部商品</h3>
+                <span style="font-size:13px;color:#888;" id="totalCount"></span>
+            </div>
+            <div class="product-list" id="productGrid">
+                <div class="no-product">加载中...</div>
+            </div>
+            <div class="product-pagination" id="productPagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-container">
+            <div class="footer-info">
+                <h4>关于我们</h4>
+                <p>五金产品销售管理系统，为五金企业提供一体化数字化服务。</p>
+            </div>
+            <div class="footer-contact">
+                <h4>联系我们</h4>
+                <p>客服电话：123-456-7890</p>
+                <p>工作时间：周一至周日 9:00-21:00</p>
+                <p>邮箱：service@wujin.com</p>
+            </div>
+        </div>
+        <div class="copyright">© 2025 五金产品销售管理系统</div>
+    </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+// ===== 工具函数 =====
+function getToken() { try { return JSON.parse(localStorage.getItem('loginUser')||'{}').token||''; } catch { return ''; } }
+function getLoginUser() { try { return JSON.parse(localStorage.getItem('loginUser')||'{}'); } catch { return {}; } }
+function isLoggedIn() { return !!getToken(); }
+function authHeader() { return { 'Authorization': 'Bearer ' + getToken() }; }
+function showToast(msg) {
+    const $t = $('#toast'); $t.text(msg).fadeIn(200);
+    clearTimeout(window._tt); window._tt = setTimeout(() => $t.fadeOut(300), 1800);
+}
+function resolveImg(url) {
+    if (!url) return '../../images/avatar/default.png';
+    if (url.startsWith('/images/')) return '../..' + url;
+    if (url.startsWith('./images/')) return '../../' + url.replace('./', '');
+    if (url.startsWith('images/')) return '../../' + url;
+    return url;
+}
+
+// ===== 状态 =====
+let currentPage = 1, currentCategoryId = '', currentKeyword = '', favoriteIds = new Set();
+const PAGE_SIZE = 12;
+
+// ===== 初始化 =====
+$(function() {
+    loadUserInfo();
+    loadFavoriteIds();
+    loadCartCount();
+    loadCategoryTree();
+
+    // 读取 URL 参数（来自其他页面的搜索跳转）
+    const params = new URLSearchParams(location.search);
+    const kwParam = params.get('keyword');
+    const catParam = params.get('categoryId');
+    if (kwParam) { $('#searchInput').val(kwParam); currentKeyword = kwParam; }
+    if (catParam) { currentCategoryId = catParam; }
+
+    loadProducts(1, currentCategoryId, currentKeyword);
+
+    $('#searchBtn').on('click', function() {
+        currentKeyword = $.trim($('#searchInput').val());
+        currentPage = 1;
+        loadProducts(1, currentCategoryId, currentKeyword);
+    });
+    $('#searchInput').on('keypress', function(e) {
+        if (e.which === 13) $('#searchBtn').trigger('click');
+    });
+});
+
+// ===== 加载用户信息 =====
+function loadUserInfo() {
+    const u = getLoginUser();
+    $('#userNameDisplay').text(u.username || '');
+    const avatarImg = document.querySelector('#userAvatar .avatar-img');
+    if (avatarImg && u.avatar) avatarImg.src = resolveImg(u.avatar);
+}
+
+// ===== 加载购物车数量 =====
+function loadCartCount() {
+    if (!isLoggedIn()) return;
+    $.ajax({ url: '/api/v1/cart/count', headers: authHeader(), success: function(res) {
+        if (res.code === 200) {
+            const cnt = res.data || 0;
+            const $b = $('#cartBadge');
+            $b.text(cnt).attr('data-count', cnt).toggle(cnt > 0);
+        }
+    }});
+}
+
+// ===== 加载收藏ID =====
+function loadFavoriteIds() {
+    if (!isLoggedIn()) return;
+    $.ajax({ url: '/api/v1/favorite/ids', headers: authHeader(), success: function(res) {
+        if (res.code === 200) favoriteIds = new Set(res.data);
+    }});
+}
+
+// ===== 加载分类树 =====
+function loadCategoryTree() {
+    $.get('/api/v1/product/category/list', function(res) {
+        if (res.code !== 200 || !res.data) return;
+
+        // 第一步：父分类去重（按 名称 + parentId 去重，同一层级名称唯一）
+        const parentUniqueKey = (item) => `${item.categoryName}_${item.parentId}`;
+        const uniqueParents = {};
+        res.data.forEach(parent => {
+            const key = parentUniqueKey(parent);
+            if (!uniqueParents[key]) {
+                uniqueParents[key] = parent;
+                // 第二步：子分类去重（同样按 名称 + parentId 去重）
+                const childUniqueKey = (item) => `${item.categoryName}_${item.parentId}`;
+                const uniqueChildren = {};
+                parent.children = parent.children || [];
+                parent.children.forEach(child => {
+                    const cKey = childUniqueKey(child);
+                    if (!uniqueChildren[cKey]) {
+                        uniqueChildren[cKey] = child;
+                    }
+                });
+                // 转换为子分类数组
+                uniqueParents[key].children = Object.values(uniqueChildren);
+            }
+        });
+        // 转换为去重后的父分类数组
+        const uniqueParentList = Object.values(uniqueParents);
+
+        // 渲染分类树
+        let html = '';
+        uniqueParentList.forEach(function(parent) {
+            const hasChildren = parent.children.length > 0;
+            html += '<div class="cat-group">'
+                + '<div class="cat-parent" data-id="' + parent.categoryId + '" data-name="' + parent.categoryName + '">'
+                + parent.categoryName
+                + (hasChildren ? '<i style="font-style:normal;font-size:11px;color:#bbb;">▸</i>' : '')
+                + '</div>';
+            if (hasChildren) {
+                html += '<div class="cat-children">';
+                parent.children.forEach(function(child) {
+                    html += '<div class="cat-child" data-id="' + child.categoryId + '" data-name="' + child.categoryName + '">' + child.categoryName + '</div>';
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+        $('#catTree').html(html);
+
+        // 以下原有事件绑定逻辑修改
+        // 点击全部
+        $('.cat-all').on('click', function() {
+            setActiveCategory('', '全部商品');
+            // 点击全部时，关闭所有父分类的子分支
+            $('#catTree .cat-children.open').removeClass('open');
+            $('#catTree .cat-parent i').text('▸');
+        });
+
+        // 点击父分类（核心修改部分）
+        $('#catTree').on('click', '.cat-parent', function() {
+            const $this = $(this);
+            const catId = $this.data('id');
+            const catName = $this.data('name');
+            const $children = $this.next('.cat-children');
+
+            // 1. 关闭所有其他父分类的子分支
+            $('#catTree .cat-parent').not($this).each(function() {
+                const $otherChildren = $(this).next('.cat-children');
+                if ($otherChildren.hasClass('open')) {
+                    $otherChildren.removeClass('open');
+                    $(this).find('i').text('▸');
+                }
+            });
+
+            // 2. 切换当前父分类的子分支状态
+            if ($children.length) {
+                $children.toggleClass('open');
+                $this.find('i').text($children.hasClass('open') ? '▾' : '▸');
+            }
+
+            // 3. 设置当前分类为激活状态并加载商品
+            setActiveCategory(catId, catName);
+        });
+
+        // 点击子分类
+        $('#catTree').on('click', '.cat-child', function() {
+            const $this = $(this);
+            setActiveCategory($this.data('id'), $this.data('name'));
+            // 点击子分类时，关闭其他父分类的子分支（可选优化）
+            const $currentParent = $this.closest('.cat-children').prev('.cat-parent');
+            $('#catTree .cat-parent').not($currentParent).each(function() {
+                const $otherChildren = $(this).next('.cat-children');
+                if ($otherChildren.hasClass('open')) {
+                    $otherChildren.removeClass('open');
+                    $(this).find('i').text('▸');
+                }
+            });
+        });
+
+        // 如果 URL 带了 categoryId，高亮对应分类
+        if (currentCategoryId) {
+            const $target = $('#catTree [data-id="' + currentCategoryId + '"]');
+            if ($target.length) {
+                $target.addClass('active');
+                const $parent = $target.closest('.cat-children');
+                if ($parent.length) {
+                    $parent.addClass('open');
+                    // 打开当前分类父分支时，关闭其他分支
+                    $('#catTree .cat-children').not($parent).removeClass('open');
+                    $('#catTree .cat-parent').not($parent.prev('.cat-parent')).find('i').text('▸');
+                    $parent.prev('.cat-parent').find('i').text('▾');
+                }
+                $('#breadcrumb').text($target.data('name'));
+                $('#sectionTitle').text($target.data('name'));
+            }
+        }
+    });
+}
+
+function setActiveCategory(catId, catName) {
+    currentCategoryId = catId;
+    currentPage = 1;
+    // 高亮
+    $('.cat-all, .cat-parent, .cat-child').removeClass('active');
+    if (!catId) {
+        $('.cat-all').addClass('active');
+    } else {
+        $('#catTree [data-id="' + catId + '"]').addClass('active');
+    }
+    $('#breadcrumb').text(catName);
+    $('#sectionTitle').text(catName);
+    loadProducts(1, currentCategoryId, currentKeyword);
+}
+
+// ===== 加载商品列表 =====
+function loadProducts(page, categoryId, keyword) {
+    currentPage = page;
+    let url = '/api/v1/product/list?isOnSale=1&pageNum=' + page + '&pageSize=' + PAGE_SIZE;
+    if (categoryId) url += '&categoryId=' + categoryId;
+    if (keyword) url += '&keyword=' + encodeURIComponent(keyword);
+
+    $('#productGrid').html('<div class="no-product">加载中...</div>');
+    $.get(url, function(res) {
+        if (res.code !== 200 || !res.data) {
+            $('#productGrid').html('<div class="no-product">加载失败，请刷新重试</div>'); return;
+        }
+        const data = res.data;
+        const records = data.records || [];
+        $('#totalCount').text(data.total > 0 ? '共 ' + data.total + ' 件' : '');
+        if (!records.length) {
+            $('#productGrid').html('<div class="no-product">暂无相关商品</div>');
+            $('#productPagination').html(''); return;
+        }
+        renderProductGrid(records);
+        renderPagination(page, data.pages || 1, categoryId, keyword);
+    }).fail(function() {
+        $('#productGrid').html('<div class="no-product">加载失败，请刷新重试</div>');
+    });
+}
+
+// ===== 渲染商品卡片 =====
+function renderProductGrid(records) {
+    let html = '';
+    records.forEach(function(p) {
+        const isFav = favoriteIds.has(p.productId);
+        const noStock = !p.totalStock || p.totalStock <= 0;
+        const imgSrc = p.mainImage ? resolveImg(p.mainImage) : '../../images/avatar/default.png';
+        const price = p.minPrice != null ? '¥' + parseFloat(p.minPrice).toFixed(2) : '价格待定';
+        const unit = p.unit ? '/' + p.unit : '';
+        let stockHtml = noStock ? '<span class="stock-out">已售罄</span>'
+            : (p.totalStock <= 50 ? '<span class="stock-low">库存紧张（' + p.totalStock + (p.unit||'') + '）</span>'
+            : '<span class="stock-high">库存充足</span>');
+        const brand = (p.brand || p.model) ? ((p.brand||'') + (p.model ? ' ' + p.model : '')) : '&nbsp;';
+        // 分类标签：显示"大类 / 小类"
+        let catTag = '';
+        if (p.parentCategoryName && p.categoryName) {
+            catTag = '<span class="cat-tag">' + p.parentCategoryName + ' / ' + p.categoryName + '</span>';
+        } else if (p.categoryName) {
+            catTag = '<span class="cat-tag">' + p.categoryName + '</span>';
+        }
+        html += '<div class="product-card" data-pid="' + p.productId + '" data-specid="' + (p.firstSpecId||'') + '" data-stock="' + (p.totalStock||0) + '">'
+            + '<div class="product-img-wrap">'
+            + '<img src="' + imgSrc + '" alt="' + p.productName + '" class="product-img" onerror="this.src=\'../../images/avatar/default.png\'">'
+            + '<button class="fav-btn' + (isFav?' active':'') + '" title="' + (isFav?'取消收藏':'收藏') + '">' + (isFav?'❤️':'🤍') + '</button>'
+            + '</div><div class="product-info">'
+            + catTag
+            + '<h4 class="product-name" title="' + p.productName + '">' + p.productName + '</h4>'
+            + '<p class="product-brand">' + brand + '</p>'
+            + '<div class="product-price">' + price + '<span class="unit">' + unit + '</span></div>'
+            + '<p class="product-stock">' + stockHtml + '</p>'
+            + '<button class="add-cart"' + (noStock?' disabled':'') + '>' + (noStock?'暂时缺货':'加入购物车') + '</button>'
+            + '</div></div>';
+    });
+    $('#productGrid').html(html);
+    bindCardEvents();
+}
+
+// ===== 绑定卡片事件 =====
+function bindCardEvents() {
+    $('#productGrid .fav-btn').on('click', function(e) {
+        e.stopPropagation();
+        const $card = $(this).closest('.product-card');
+        const productId = $card.data('pid');
+        const $btn = $(this);
+        $.ajax({
+            url: '/api/v1/favorite/toggle/' + productId, type: 'POST', headers: authHeader(),
+            success: function(res) {
+                const isFav = res.data === true;
+                if (isFav) { favoriteIds.add(productId); $btn.addClass('active').html('❤️').attr('title','取消收藏'); }
+                else { favoriteIds.delete(productId); $btn.removeClass('active').html('🤍').attr('title','收藏'); }
+                showToast(isFav ? '已收藏' : '已取消收藏');
+            },
+            error: function() { showToast('操作失败，请重试'); }
+        });
+    });
+    $('#productGrid .add-cart:not(:disabled)').on('click', function() {
+        const $card = $(this).closest('.product-card');
+        const specId = $card.data('specid');
+        if (!specId) { showToast('该商品暂无可用规格'); return; }
+        const $btn = $(this).prop('disabled', true).text('添加中...');
+        $.ajax({
+            url: '/api/v1/cart/add', type: 'POST',
+            headers: $.extend(authHeader(), { 'Content-Type': 'application/json' }),
+            data: JSON.stringify({ specId: specId, quantity: 1 }),
+            success: function(res) {
+                if (res.code === 200) { showToast('已加入购物车 🛒'); loadCartCount(); }
+                else { showToast(res.msg || '添加失败'); }
+            },
+            error: function() { showToast('操作失败，请重试'); },
+            complete: function() { $btn.prop('disabled', false).text('加入购物车'); }
+        });
+    });
+}
+
+// ===== 分页 =====
+function renderPagination(current, pages, catId, kw) {
+    if (pages <= 1) { $('#productPagination').html(''); return; }
+    let html = '<button class="p-btn" id="prevPBtn" ' + (current <= 1 ? 'disabled' : '') + '>上一页</button>';
+    const start = Math.max(1, current - 2), end = Math.min(pages, current + 2);
+    for (let i = start; i <= end; i++) {
+        html += '<button class="p-btn' + (i === current ? ' cur' : '') + '" data-p="' + i + '">' + i + '</button>';
+    }
+    html += '<button class="p-btn" id="nextPBtn" ' + (current >= pages ? 'disabled' : '') + '>下一页</button>';
+    const $pg = $('#productPagination').html(html);
+    $pg.find('[data-p]').on('click', function() { loadProducts(+$(this).data('p'), catId, kw); window.scrollTo(0,0); });
+    $pg.find('#prevPBtn').on('click', function() { if (current > 1) { loadProducts(current-1, catId, kw); window.scrollTo(0,0); } });
+    $pg.find('#nextPBtn').on('click', function() { if (current < pages) { loadProducts(current+1, catId, kw); window.scrollTo(0,0); } });
+}
+</script>
+</body>
+</html>

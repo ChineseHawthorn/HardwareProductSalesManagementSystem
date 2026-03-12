@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 404</title>
+    <link rel="icon" href="images/basic/favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", "PingFang SC", sans-serif;
+        }
+        /* 全屏居中布局，背景渐变高级感 */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(120deg, #f6f9fc 0%, #eef2f5 100%);
+            color: #333;
+            padding: 20px;
+        }
+        /* 404 数字大号渐变字体+动画 */
+        .error-code {
+            font-size: 12rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #3a86ff, #8338ec);
+            -webkit-background-clip: text;
+            color: transparent;
+            line-height: 1;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+        /* 错误提示文案 */
+        .error-text {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+            text-align: center;
+        }
+        .error-desc {
+            font-size: 1rem;
+            color: #718096;
+            max-width: 500px;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        /* 返回按钮 美化+悬停效果 */
+        .back-btn {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #3a86ff, #8338ec);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(58, 134, 255, 0.3);
+        }
+        /* 404数字浮动动画 */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        /* 响应式适配手机端 */
+        @media (max-width: 768px) {
+            .error-code {
+                font-size: 7rem;
+            }
+            .error-text {
+                font-size: 1.2rem;
+            }
+            .error-desc {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="error-code">404</div>
+<div class="error-text">哎呀，页面走丢了 😕</div>
+<div class="error-desc">
+    你访问的页面不存在、已被删除或网址输入错误<br>
+    请检查网址是否正确，或返回首页继续浏览
+</div>
+<!-- 返回首页按钮，href改为你的网站首页地址 -->
+<a href="/" class="back-btn">返回首页</a>
+
+<script>
+    // 可选：优化体验 - 2秒后聚焦返回按钮，方便键盘回车跳转
+    setTimeout(() => document.querySelector('.back-btn').focus(), 2000);
+</script>
+</body>
+</html>

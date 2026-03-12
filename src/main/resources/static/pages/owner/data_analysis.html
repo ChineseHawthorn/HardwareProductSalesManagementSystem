@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计 - 五金商品管理平台</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==0){window.location.href='../../index.html';}}());</script>
+</head>
+<body>
+<div class="layout">
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店主端</div>
+        </div>
+        <div class="nav">
+            <a href="owner_console.html" class="nav-item">
+                <i class="fas fa-tachometer-alt nav-ico"></i>
+                <span class="nav-text">控制台首页</span>
+            </a>
+            <a href="product_manager.html" class="nav-item">
+                <i class="fas fa-box nav-ico"></i>
+                <span class="nav-text">商品管理</span>
+            </a>
+            <a href="inventory_manager.html" class="nav-item">
+                <i class="fas fa-warehouse nav-ico"></i>
+                <span class="nav-text">库存管理</span>
+            </a>
+            <a href="order_manager.html" class="nav-item">
+                <i class="fas fa-shopping-cart nav-ico"></i>
+                <span class="nav-text">订单管理</span>
+            </a>
+            <a href="user_manager.html" class="nav-item">
+                <i class="fas fa-users nav-ico"></i>
+                <span class="nav-text">用户管理</span>
+            </a>
+            <a href="data_analysis.html" class="nav-item active">
+                <i class="fas fa-chart-line nav-ico"></i>
+                <span class="nav-text">数据统计</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 右侧主体内容 -->
+    <div class="main">
+        <!-- 顶部栏 -->
+        <div class="topbar">
+            <h1 class="page-title">数据统计</h1>
+            <div class="topbar-right">
+                <div class="search">
+                    <input type="text" placeholder="搜索统计数据...">
+                </div>
+                <div class="top-icon">
+                    <i class="fas fa-user" style="line-height: 38px; text-align: center; color: #666;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区 -->
+        <div class="content">
+            <!-- 筛选工具栏 -->
+            <div class="panel" style="margin-bottom: 16px;">
+                <div class="toolbar">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span style="font-weight: 600; color: #333;">统计周期：</span>
+                        <select id="monthSelector" class="select" style="width: 120px;">
+                            <option value="all">近12个月</option>
+                            <option value="202401">2024年1月</option>
+                            <option value="202402">2024年2月</option>
+                            <option value="202403">2024年3月</option>
+                            <option value="202404">2024年4月</option>
+                            <option value="202405" selected>2024年5月</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="refreshCharts()">
+                            <i class="fas fa-refresh btn-ico"></i> 刷新数据
+                        </button>
+                        <button class="btn" style="background: #f0f9ff; color: #2563eb;">
+                            <i class="fas fa-download btn-ico"></i> 导出报表
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 销售额趋势图 -->
+            <div class="panel" style="margin-bottom: 16px;">
+                <div style="padding: 16px; border-bottom: 1px solid #e5eaf3;">
+                    <h2 style="margin: 0; font-size: 16px; font-weight: 700;">月度销售额变化趋势</h2>
+                </div>
+                <div id="salesChart" style="width: 100%; height: 400px; padding: 16px;"></div>
+            </div>
+
+            <!-- 订单量趋势图 + 产品占比饼图 组合 -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                <!-- 订单量趋势图 -->
+                <div class="panel">
+                    <div style="padding: 16px; border-bottom: 1px solid #e5eaf3;">
+                        <h2 style="margin: 0; font-size: 16px; font-weight: 700;">月度订单量变化趋势</h2>
+                    </div>
+                    <div id="orderChart" style="width: 100%; height: 400px; padding: 16px;"></div>
+                </div>
+
+                <!-- 产品订单量占比饼图 -->
+                <div class="panel">
+                    <div style="padding: 16px; border-bottom: 1px solid #e5eaf3;">
+                        <h2 style="margin: 0; font-size: 16px; font-weight: 700;">四类产品订单量占比</h2>
+                        <span style="color: #666; font-size: 12px;">（当前选择：2024年5月）</span>
+                    </div>
+                    <div id="productPieChart" style="width: 100%; height: 400px; padding: 16px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化图表实例
+    const salesChart = echarts.init(document.getElementById('salesChart'));
+    const orderChart = echarts.init(document.getElementById('orderChart'));
+    const productPieChart = echarts.init(document.getElementById('productPieChart'));
+
+    // 基础数据（模拟真实业务数据）
+    const monthLabels = ['2023年6月', '2023年7月', '2023年8月', '2023年9月', '2023年10月', '2023年11月',
+        '2023年12月', '2024年1月', '2024年2月', '2024年3月', '2024年4月', '2024年5月'];
+    const salesData = [85000, 92000, 88000, 105000, 120000, 150000, 180000, 95000, 110000, 135000, 142000, 156000];
+    const orderData = [120, 135, 128, 150, 165, 200, 240, 110, 125, 145, 158, 172];
+
+    // 各月份四类产品订单量占比数据（建筑五金/工具五金/日用五金/工业五金）
+    const productPieDataMap = {
+        'all': [
+            { value: 450, name: '建筑五金' },
+            { value: 380, name: '工具五金' },
+            { value: 220, name: '日用五金' },
+            { value: 180, name: '工业五金' }
+        ],
+        '202401': [
+            { value: 35, name: '建筑五金' },
+            { value: 30, name: '工具五金' },
+            { value: 25, name: '日用五金' },
+            { value: 20, name: '工业五金' }
+        ],
+        '202402': [
+            { value: 40, name: '建筑五金' },
+            { value: 32, name: '工具五金' },
+            { value: 28, name: '日用五金' },
+            { value: 25, name: '工业五金' }
+        ],
+        '202403': [
+            { value: 45, name: '建筑五金' },
+            { value: 38, name: '工具五金' },
+            { value: 30, name: '日用五金' },
+            { value: 32, name: '工业五金' }
+        ],
+        '202404': [
+            { value: 50, name: '建筑五金' },
+            { value: 42, name: '工具五金' },
+            { value: 35, name: '日用五金' },
+            { value: 31, name: '工业五金' }
+        ],
+        '202405': [
+            { value: 55, name: '建筑五金' },
+            { value: 45, name: '工具五金' },
+            { value: 38, name: '日用五金' },
+            { value: 34, name: '工业五金' }
+        ]
+    };
+
+    // 刷新图表数据的核心函数
+    function refreshCharts() {
+        const selectedMonth = document.getElementById('monthSelector').value;
+
+        // 1. 销售额趋势图配置
+        const salesOption = {
+            title: { text: '' },
+            tooltip: {
+                trigger: 'axis',
+                formatter: '{b}<br/>销售额：¥{c} 元'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: monthLabels
+            },
+            yAxis: {
+                type: 'value',
+                name: '销售额（元）',
+                axisLabel: {
+                    formatter: '{value} 元'
+                }
+            },
+            series: [
+                {
+                    name: '销售额',
+                    type: 'line',
+                    data: salesData,
+                    smooth: true, // 平滑曲线
+                    itemStyle: { color: '#3b82f6' },
+                    lineStyle: { width: 2 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(59, 130, 246, 0.4)' },
+                            { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
+                        ])
+                    }
+                }
+            ]
+        };
+
+        // 2. 订单量趋势图配置
+        const orderOption = {
+            title: { text: '' },
+            tooltip: {
+                trigger: 'axis',
+                formatter: '{b}<br/>订单量：{c} 单'
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: monthLabels
+            },
+            yAxis: {
+                type: 'value',
+                name: '订单量（单）',
+                axisLabel: {
+                    formatter: '{value} 单'
+                }
+            },
+            series: [
+                {
+                    name: '订单量',
+                    type: 'line',
+                    data: orderData,
+                    smooth: true,
+                    itemStyle: { color: '#10b981' },
+                    lineStyle: { width: 2 },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(16, 185, 129, 0.4)' },
+                            { offset: 1, color: 'rgba(16, 185, 129, 0.05)' }
+                        ])
+                    }
+                }
+            ]
+        };
+
+        // 3. 产品占比饼图配置
+        const pieOption = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} 单 ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                left: 'center',
+                top: 'bottom'
+            },
+            series: [
+                {
+                    name: '订单量占比',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '40%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: 16,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: productPieDataMap[selectedMonth],
+                    color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] // 四类产品对应颜色
+                }
+            ]
+        };
+
+        // 更新图表
+        salesChart.setOption(salesOption);
+        orderChart.setOption(orderOption);
+        productPieChart.setOption(pieOption);
+
+        // 更新饼图标题的月份提示
+        const monthText = selectedMonth === 'all' ? '近12个月' :
+            `${selectedMonth.substring(0,4)}年${selectedMonth.substring(4)}月`;
+        document.querySelector('#productPieChart').parentNode.querySelector('span').textContent =
+            `（当前选择：${monthText}）`;
+    }
+
+    // 页面加载时初始化图表
+    window.onload = function() {
+        refreshCharts();
+        // 监听窗口大小变化，自适应图表
+        window.addEventListener('resize', function() {
+            salesChart.resize();
+            orderChart.resize();
+            productPieChart.resize();
+        });
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 个人信息</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==1){window.location.href='../../index.html';}}());</script>
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        html, body {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .layout, .main, .content {
+            height: 100%;
+            overflow: hidden;
+        }
+        .profile-container{max-width:560px;margin:0 auto;padding:0 20px}
+        .profile-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);padding:36px 32px;text-align:center}
+        .avatar-section{position:relative;display:inline-block;margin-bottom:20px}
+        .avatar-lg{width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid #e5e7eb;display:block}
+        .avatar-edit{position:absolute;bottom:2px;right:2px;width:32px;height:32px;background:#3b82f6;color:#fff;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:background .2s}
+        .avatar-edit:hover{background:#2563eb}
+        #avatarFileInput{display:none}
+        .staff-name{font-size:22px;font-weight:700;color:#111827;margin-bottom:4px}
+        .staff-role{display:inline-block;background:#dbeafe;color:#2563eb;border-radius:12px;padding:3px 14px;font-size:12px;font-weight:600;margin-bottom:24px}
+        .info-list{border-top:1px solid #f0f3f9;padding-top:16px;text-align:left}
+        .info-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #f8f9fb}
+        .info-row:last-child{border-bottom:none}
+        .info-label{font-size:14px;color:#6b7280;display:flex;align-items:center;gap:8px}
+        .info-label i{width:18px;text-align:center;color:#9ca3af}
+        .info-value{font-size:14px;color:#111827;font-weight:500}
+        .info-action{font-size:13px;color:#3b82f6;cursor:pointer;margin-left:8px;border:none;background:none;font-weight:500}
+        .info-action:hover{color:#2563eb;text-decoration:underline}
+        .action-section{margin-top:28px;display:flex;flex-direction:column;gap:12px}
+        .btn-logout-lg{width:100%;padding:12px;background:#fff;color:#ef4444;border:1px solid #fecaca;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+        .btn-logout-lg:hover{background:#fef2f2;border-color:#ef4444}
+        .btn-back{width:100%;padding:12px;background:#f3f4f6;color:#374151;border:none;border-radius:10px;font-size:15px;cursor:pointer;transition:background .2s}
+        .btn-back:hover{background:#e5e7eb}
+        /* 弹窗 */
+        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+        .modal-overlay.show{display:flex}
+        .modal{background:#fff;border-radius:12px;padding:28px;width:420px;max-width:92vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+        .modal-title{font-size:18px;font-weight:700;margin:0 0 20px;color:#111827}
+        .form-row{margin-bottom:16px}
+        .form-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
+        .form-input{width:100%;height:40px;padding:0 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box}
+        .form-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+        .form-input:read-only{background:#f9fafb;color:#6b7280}
+        .form-msg{font-size:13px;min-height:18px;margin-bottom:8px}
+        .form-msg.error{color:#ef4444}
+        .form-msg.success{color:#10b981}
+        .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .btn-cancel-modal{background:#f3f4f6;color:#374151;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;font-size:14px}
+        .btn-cancel-modal:hover{background:#e5e7eb}
+        .btn-save{background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:9px 24px;cursor:pointer;font-size:14px;font-weight:600}
+        .btn-save:hover{background:#2563eb}
+        .btn-save:disabled{opacity:.5;cursor:not-allowed}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店员端</div>
+        </div>
+        <div class="nav">
+            <a href="staff_console.html" class="nav-item"><i class="fas fa-tachometer-alt nav-ico"></i><span class="nav-text">控制台首页</span></a>
+            <a href="product_manager.html" class="nav-item"><i class="fas fa-box nav-ico"></i><span class="nav-text">商品管理</span></a>
+            <a href="inventory_manager.html" class="nav-item"><i class="fas fa-warehouse nav-ico"></i><span class="nav-text">库存管理</span></a>
+            <a href="order_manager.html" class="nav-item"><i class="fas fa-shopping-cart nav-ico"></i><span class="nav-text">订单管理</span></a>
+            <a href="feedback_manager.html" class="nav-item"><i class="fas fa-comments nav-ico"></i><span class="nav-text">反馈管理</span></a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <h1 class="page-title">个人信息</h1>
+            <div class="topbar-right">
+                <div class="user-info" style="cursor:pointer;">
+                    <span id="adminName" style="margin-right:10px;font-size:14px;">员工</span>
+                    <img id="adminAvatar" src="../../images/avatar/default.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="avatar-section">
+                        <img src="../../images/avatar/default.png" alt="头像" class="avatar-lg" id="profileAvatar">
+                        <div class="avatar-edit" id="avatarEditBtn" title="更换头像">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <input type="file" id="avatarFileInput" accept="image/*">
+                    </div>
+                    <div class="staff-name" id="profileName">加载中...</div>
+                    <div class="staff-role">店员</div>
+
+                    <div class="info-list">
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-user"></i> 账号</span>
+                            <span class="info-value" id="infoUsername">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-id-card"></i> 姓名</span>
+                            <span class="info-value" id="infoRealName">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-phone"></i> 手机号</span>
+                            <span>
+                                <span class="info-value" id="infoPhone">-</span>
+                                <button class="info-action" id="editPhoneBtn">修改</button>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label"><i class="fas fa-calendar"></i> 注册时间</span>
+                            <span class="info-value" id="infoCreateTime">-</span>
+                        </div>
+                    </div>
+
+                    <div class="action-section">
+                        <button class="btn-back" id="btnBack"><i class="fas fa-arrow-left" style="margin-right:6px;"></i>返回控制台</button>
+                        <button class="btn-logout-lg" id="btnLogout"><i class="fas fa-sign-out-alt" style="margin-right:6px;"></i>退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修改手机号弹窗 -->
+<div class="modal-overlay" id="modalEditPhone">
+    <div class="modal">
+        <h3 class="modal-title">修改手机号</h3>
+        <div class="form-msg" id="phoneMsg"></div>
+        <div class="form-row">
+            <label class="form-label">当前手机号</label>
+            <input class="form-input" id="currentPhone" readonly>
+        </div>
+        <div class="form-row">
+            <label class="form-label">新手机号 <span style="color:#ef4444;">*</span></label>
+            <input class="form-input" id="newPhone" placeholder="请输入11位手机号" maxlength="11">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel-modal" id="btnCancelPhone">取消</button>
+            <button class="btn-save" id="btnSavePhone">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/jquery-3.7.1.min.js"></script>
+<script>
+var loginUser = {};
+try { loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}'); } catch(e) {}
+var TOKEN = loginUser.token || '';
+var currentUserData = null;
+
+function H() { return { 'Authorization': 'Bearer ' + TOKEN }; }
+function HJ() { return Object.assign(H(), {'Content-Type':'application/json'}); }
+
+function resolveAvatar(url) {
+    if (!url) return '../../images/avatar/default.png';
+    if (url.startsWith('/images/')) return '../..' + url;
+    if (url.startsWith('./images/')) return url.replace('./', '../../');
+    if (url.startsWith('images/')) return '../../' + url;
+    return url;
+}
+
+function fmtTime(t) {
+    if (!t) return '-';
+    return new Date(t).toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-');
+}
+
+// 加载顶栏用户信息
+function loadTopbar() {
+    $('#adminName').text(loginUser.username || '员工');
+    var av = loginUser.avatar || '';
+    if (av.startsWith('./')) av = av.replace('./', '../../');
+    if (av) $('#adminAvatar').attr('src', av);
+}
+
+// 加载用户详细信息
+function loadProfile() {
+    $.ajax({
+        url: '/api/v1/user/info', type: 'GET', headers: H(),
+        success: function(res) {
+            if (res.code === 200 && res.data) {
+                currentUserData = res.data;
+                renderProfile(res.data);
+            } else {
+                alert('加载个人信息失败');
+            }
+        },
+        error: function() { alert('网络错误，请刷新重试'); }
+    });
+}
+
+function renderProfile(u) {
+    $('#profileAvatar').attr('src', resolveAvatar(u.avatar));
+    $('#profileName').text(u.realName || u.username || '-');
+    $('#infoUsername').text(u.username || '-');
+    $('#infoRealName').text(u.realName || '未填写');
+    $('#infoPhone').text(u.phone || '未填写');
+    $('#infoCreateTime').text(fmtTime(u.createTime));
+}
+
+// 头像上传
+$('#avatarEditBtn').on('click', function() { $('#avatarFileInput').trigger('click'); });
+$('#avatarFileInput').on('change', function() {
+    var file = this.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('图片大小不能超过2MB'); return; }
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    $.ajax({
+        url: '/api/v1/user/avatar/upload', type: 'POST', headers: H(),
+        data: formData, processData: false, contentType: false,
+        success: function(res) {
+            if (res.code === 200) {
+                var newUrl = res.data;
+                $('#profileAvatar').attr('src', resolveAvatar(newUrl));
+                $('#adminAvatar').attr('src', resolveAvatar(newUrl));
+                // 同步更新localStorage
+                loginUser.avatar = newUrl;
+                localStorage.setItem('loginUser', JSON.stringify(loginUser));
+                alert('头像更新成功');
+            } else {
+                alert(res.msg || '上传失败');
+            }
+        },
+        error: function() { alert('上传失败，请重试'); }
+    });
+});
+
+// 修改手机号
+$('#editPhoneBtn').on('click', function() {
+    $('#currentPhone').val(currentUserData ? (currentUserData.phone || '') : '');
+    $('#newPhone').val('');
+    $('#phoneMsg').text('').removeClass('error success');
+    $('#modalEditPhone').addClass('show');
+});
+
+$('#btnSavePhone').on('click', function() {
+    var phone = $.trim($('#newPhone').val());
+    if (!phone) {
+        $('#phoneMsg').text('请输入新手机号').addClass('error').removeClass('success');
+        return;
+    }
+    if (!/^1\d{10}$/.test(phone)) {
+        $('#phoneMsg').text('请输入正确的11位手机号').addClass('error').removeClass('success');
+        return;
+    }
+
+    var $btn = $(this).prop('disabled', true).text('保存中...');
+    $.ajax({
+        url: '/api/v1/user/update', type: 'PUT', headers: HJ(),
+        data: JSON.stringify({ phone: phone }),
+        success: function(res) {
+            if (res.code === 200) {
+                $('#phoneMsg').text('手机号修改成功！').addClass('success').removeClass('error');
+                // 更新localStorage
+                loginUser.phone = phone;
+                localStorage.setItem('loginUser', JSON.stringify(loginUser));
+                // 刷新显示
+                loadProfile();
+                setTimeout(function() { $('#modalEditPhone').removeClass('show'); }, 800);
+            } else {
+                $('#phoneMsg').text(res.msg || '修改失败').addClass('error').removeClass('success');
+            }
+        },
+        error: function() {
+            $('#phoneMsg').text('请求失败，请重试').addClass('error').removeClass('success');
+        },
+        complete: function() { $btn.prop('disabled', false).text('保存修改'); }
+    });
+});
+
+$('#btnCancelPhone').on('click', function() { $('#modalEditPhone').removeClass('show'); });
+
+// 退出登录
+$('#btnLogout').on('click', function() {
+    if (confirm('确定要退出登录吗？')) {
+        localStorage.removeItem('loginUser');
+        window.location.href = '../../index.html';
+    }
+});
+
+// 返回控制台
+$('#btnBack').on('click', function() {
+    window.location.href = 'staff_console.html';
+});
+
+// 遮罩关闭弹窗
+$('.modal-overlay').on('click', function(e) {
+    if ($(e.target).hasClass('modal-overlay')) $(this).removeClass('show');
+});
+
+// 初始化
+$(function() {
+    loadTopbar();
+    loadProfile();
+});
+</script>
+</body>
+</html>

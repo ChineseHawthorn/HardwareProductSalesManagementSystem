@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - 五金产品销售管理系统</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/index.css">
+    <script src="../../js/jquery-3.7.1.min.js"></script>
+    <style>
+        html, body { height: 100%; overflow: hidden; }
+        body { background: #f5f5f5; display: flex; flex-direction: column; }
+        .header { flex-shrink: 0; }
+
+        /* 主体区域（header 以下全部空间） */
+        .page-body { flex: 1; overflow: hidden; padding: 20px 0; box-sizing: border-box; }
+        .page-body .container { height: 100%; display: flex; overflow: hidden; }
+
+        /* ===== 顶部导航 ===== */
+        .header { border-bottom: 2px solid #c00; background: #fff; position: sticky; top: 0; z-index: 999; }
+        .nav { display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .logo { font-size: 22px; color: #c00; font-weight: bold; cursor: pointer; }
+        .nav-right { display: flex; align-items: center; gap: 16px; }
+        .btn-logout {
+            padding: 7px 20px; background: #c00; color: #fff; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 14px;
+        }
+        .btn-logout:hover { background: #a00; }
+        .back-link { color: #666; font-size: 14px; text-decoration: none; }
+        .back-link:hover { color: #c00; }
+
+        /* ===== 主体布局 ===== */
+        .profile-page { flex: 1; display: flex; gap: 24px; align-items: stretch; overflow: hidden; }
+
+        /* ===== 左侧：个人信息卡片 ===== */
+        .profile-card {
+            width: 320px; flex-shrink: 0; align-self: flex-start; background: #fff;
+            border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); padding: 30px 24px;
+        }
+        .avatar-wrap {
+            text-align: center; margin-bottom: 24px; position: relative; display: inline-block;
+            width: 100%;
+        }
+        .avatar-img-lg {
+            width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
+            border: 3px solid #e0e0e0; display: block; margin: 0 auto 8px;
+        }
+        .avatar-edit-btn {
+            position: absolute; bottom: 10px; right: calc(50% - 60px);
+            background: rgba(0,0,0,.5); color: #fff; border: none; border-radius: 12px;
+            padding: 3px 10px; font-size: 12px; cursor: pointer;
+        }
+        .avatar-edit-btn:hover { background: rgba(192,0,0,.7); }
+        #avatarFileInput { display: none; }
+
+        .user-name { font-size: 20px; font-weight: bold; text-align: center; color: #222; margin-bottom: 6px; }
+        .user-role-badge {
+            display: inline-block; background: #fff0f0; color: #c00;
+            border: 1px solid #c00; border-radius: 12px; padding: 2px 12px;
+            font-size: 12px; margin: 0 auto 20px; display: block; width: fit-content; margin: 0 auto 20px;
+        }
+
+        .info-list {
+            border-top: 1px solid #f0f0f0;
+            padding-top: 12px; /* 从16px微调为12px，减少顶部间距 */
+            margin-bottom: 8px; /* 新增：为按钮区域预留空间 */
+        }
+        .info-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f8f8f8; font-size: 14px; }
+        .info-label { color: #888; min-width: 64px; }
+        .info-value { color: #333; font-weight: 500; text-align: right; max-width: 170px; word-break: break-all; }
+
+        .card-actions {
+            margin-top: 8px; /* 从20px大幅减小，向上移动按钮 */
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* 保持按钮之间的间距 */
+            padding-bottom: 8px; /* 新增：避免按钮贴底 */
+        }
+        .btn-primary {
+            width: 100%; padding: 10px; background: #c00; color: #fff; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 15px;
+        }
+        .btn-primary:hover { background: #a00; }
+        .btn-secondary {
+            width: 100%; padding: 10px; background: #fff; color: #c00; border: 1px solid #c00;
+            border-radius: 4px; cursor: pointer; font-size: 15px;
+        }
+        .btn-secondary:hover { background: #fff5f5; }
+
+        /* ===== 右侧内容区 ===== */
+        .profile-content { flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+
+        /* ===== 订单卡片 ===== */
+        .orders-card {
+            flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); padding: 24px;
+        }
+        .card-title { flex-shrink: 0; font-size: 17px; font-weight: bold; color: #222; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
+        .card-title span { color: #c00; }
+
+        /* 订单状态筛选 */
+        .status-tabs { flex-shrink: 0; display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+        /* 订单表格滚动区 */
+        .orders-scroll-area { flex: 1; min-height: 0; overflow-y: auto; }
+        .orders-scroll-area::-webkit-scrollbar { width: 4px; }
+        .orders-scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .orders-scroll-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+        .orders-scroll-area::-webkit-scrollbar-thumb:hover { background: #bbb; }
+        .status-tab {
+            padding: 5px 14px; border: 1px solid #ddd; border-radius: 16px; font-size: 13px;
+            cursor: pointer; color: #666; background: #fff;
+        }
+        .status-tab.active { background: #c00; color: #fff; border-color: #c00; }
+        .status-tab:hover:not(.active) { border-color: #c00; color: #c00; }
+
+        /* 订单表格 */
+        .orders-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .orders-table th { background: #fafafa; padding: 10px 12px; text-align: left; color: #666; font-weight: 500; border-bottom: 1px solid #eee; }
+        .orders-table td { padding: 12px 12px; border-bottom: 1px solid #f5f5f5; color: #333; vertical-align: middle; }
+        .orders-table tr:hover td { background: #fffbfb; }
+
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+        .status-0 { background: #fff7e6; color: #d48806; }
+        .status-1 { background: #e6f7ff; color: #0050b3; }
+        .status-2 { background: #f5f5f5; color: #8c8c8c; }
+        .status-3 { background: #fff2e8; color: #d4380d; }
+        .status-4 { background: #e6f7ff; color: #1890ff; }
+        .status-5 { background: #f6ffed; color: #389e0d; }
+
+        .no-orders { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+
+        /* 分页 */
+        .pagination { flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; }
+        .page-btn {
+            padding: 4px 10px; border: 1px solid #ddd; border-radius: 3px; cursor: pointer; background: #fff; color: #333;
+        }
+        .page-btn:hover:not(:disabled) { border-color: #c00; color: #c00; }
+        .page-btn:disabled { color: #ccc; cursor: not-allowed; }
+        .page-btn.current { background: #c00; color: #fff; border-color: #c00; }
+        .page-info { color: #888; }
+
+        /* ===== 弹窗 ===== */
+        .modal-mask {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,.5); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-mask.show { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 8px; padding: 30px 32px; width: 420px;
+            max-width: 90vw; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,.15);
+        }
+        .modal-title { font-size: 18px; font-weight: bold; color: #222; margin-bottom: 20px; }
+        .modal-close-btn {
+            position: absolute; top: 14px; right: 16px; background: none; border: none;
+            font-size: 22px; cursor: pointer; color: #999; line-height: 1;
+        }
+        .modal-close-btn:hover { color: #333; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 14px; color: #555; margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 4px;
+            font-size: 14px; outline: none; box-sizing: border-box;
+        }
+        .form-group input:focus { border-color: #c00; }
+        .form-msg { font-size: 13px; margin-bottom: 12px; min-height: 18px; }
+        .form-msg.error { color: #c00; }
+        .form-msg.success { color: #389e0d; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+        .btn-cancel {
+            padding: 8px 20px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
+            cursor: pointer; font-size: 14px; color: #555;
+        }
+        .btn-cancel:hover { border-color: #999; }
+        .btn-save {
+            padding: 8px 24px; background: #c00; color: #fff; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 14px;
+        }
+        .btn-save:hover { background: #a00; }
+        .btn-save:disabled { background: #e8a0a0; cursor: not-allowed; }
+
+        /* ===== 反馈弹窗 ===== */
+        .modal-wide { width: 600px; padding: 24px 28px; display: flex; flex-direction: column; max-height: 86vh; }
+        .modal-wide .modal-title { flex-shrink: 0; }
+        .fb-chat-area {
+            flex: 1; overflow-y: auto; min-height: 160px; max-height: 360px;
+            border: 1px solid #f0f0f0; border-radius: 6px; background: #f8f9fa;
+            padding: 14px; display: flex; flex-direction: column; gap: 12px;
+            margin-bottom: 14px;
+        }
+        .fb-chat-area::-webkit-scrollbar { width: 4px; }
+        .fb-chat-area::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+        .fb-msg { display: flex; flex-direction: column; max-width: 75%; }
+        .fb-msg-me { align-self: flex-end; align-items: flex-end; }
+        .fb-msg-staff { align-self: flex-start; align-items: flex-start; }
+        .fb-sender { font-size: 11px; color: #999; margin-bottom: 3px; }
+        .fb-bubble {
+            padding: 9px 14px; border-radius: 12px; font-size: 13px;
+            line-height: 1.6; word-break: break-word; white-space: pre-wrap;
+        }
+        .fb-bubble-me { background: #c00; color: #fff; border-bottom-right-radius: 3px; }
+        .fb-bubble-staff { background: #fff; color: #333; border: 1px solid #e8e8e8; border-bottom-left-radius: 3px; }
+        .fb-msg-time { font-size: 11px; color: #bbb; margin-top: 3px; }
+        .fb-empty { text-align: center; color: #bbb; padding: 30px 0; font-size: 13px; }
+        .fb-input-row { flex-shrink: 0; display: flex; gap: 10px; align-items: flex-end; }
+        .fb-input-row textarea {
+            flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 4px;
+            font-size: 13px; resize: none; height: 66px; outline: none;
+            font-family: inherit; line-height: 1.5;
+        }
+        .fb-input-row textarea:focus { border-color: #c00; }
+        .fb-input-row textarea:disabled { background: #f5f5f5; }
+        .fb-closed-tip {
+            flex-shrink: 0; text-align: center; color: #999; font-size: 12px;
+            padding: 8px; background: #f5f5f5; border-radius: 4px;
+        }
+        .fb-status-bar {
+            flex-shrink: 0; display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 10px; font-size: 12px;
+        }
+        .fb-status-tag { padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+        .fb-s-0 { background: #fff7e6; color: #d48806; }
+        .fb-s-1 { background: #f6ffed; color: #389e0d; }
+        .fb-s-2 { background: #f5f5f5; color: #8c8c8c; }
+        /* 反馈按钮 */
+        .btn-fb {
+            padding: 4px 10px; font-size: 12px; background: #fff; color: #c00;
+            border: 1px solid #c00; border-radius: 4px; cursor: pointer; white-space: nowrap;
+        }
+        .btn-fb:hover { background: #fff5f5; }
+    </style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="logo" onclick="window.location.href='consumer_index.html'">五金产品销售管理系统</div>
+            <div class="nav-right">
+                <a href="consumer_index.html" class="back-link">← 返回商城</a>
+                <button class="btn-logout" id="logoutBtn">退出登录</button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- 主体 -->
+<div class="page-body">
+<div class="container">
+    <div class="profile-page">
+
+        <!-- 左侧：个人信息卡片 -->
+        <div class="profile-card">
+            <div class="avatar-wrap">
+                <img src="../../images/avatar/default.png" alt="头像" class="avatar-img-lg" id="avatarImg">
+                <button class="avatar-edit-btn" id="avatarEditBtn">更换头像</button>
+                <input type="file" id="avatarFileInput" accept="image/*">
+            </div>
+            <div class="user-name" id="displayUsername">加载中...</div>
+            <div class="user-role-badge">消费者</div>
+
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label">账号</span>
+                    <span class="info-value" id="infoUsername">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">真实姓名</span>
+                    <span class="info-value" id="infoRealName">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">手机号</span>
+                    <span class="info-value" id="infoPhone">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">注册时间</span>
+                    <span class="info-value" id="infoCreateTime">-</span>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button class="btn-primary" id="editInfoBtn">修改个人信息</button>
+                <button class="btn-secondary" id="changePwdBtn">修改密码</button>
+            </div>
+        </div>
+
+        <!-- 右侧：订单记录 -->
+        <div class="profile-content">
+            <div class="orders-card">
+                <div class="card-title">我的订单 <span id="orderTotal"></span></div>
+
+                <!-- 状态筛选 -->
+                <div class="status-tabs">
+                    <div class="status-tab active" data-status="">全部</div>
+                    <div class="status-tab" data-status="0">待支付</div>
+                    <div class="status-tab" data-status="4">待发货</div>
+                    <div class="status-tab" data-status="1">已发货</div>
+                    <div class="status-tab" data-status="5">已完成</div>
+                    <div class="status-tab" data-status="3">已退款</div>
+                    <div class="status-tab" data-status="2">已取消</div>
+                </div>
+
+                <!-- 订单表格（此区域可滚动） -->
+                <div class="orders-scroll-area">
+                    <table class="orders-table">
+                        <thead>
+                        <tr>
+                            <th>订单号</th>
+                            <th>订单金额</th>
+                            <th>订单类型</th>
+                            <th>状态</th>
+                            <th>下单时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="orderTableBody">
+                        <tr><td colspan="6" class="no-orders">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页（固定在卡片底部） -->
+                <div class="pagination" id="orderPagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- 反馈/客服沟通弹窗 -->
+<div class="modal-mask" id="feedbackModal">
+    <div class="modal-box modal-wide">
+        <button class="modal-close-btn" id="fbCloseBtn">×</button>
+        <div class="modal-title">联系客服
+            <span id="fbOrderLabel" style="font-size:12px;color:#aaa;font-weight:400;margin-left:8px;"></span>
+        </div>
+        <!-- 状态栏 -->
+        <div class="fb-status-bar" id="fbStatusBar" style="display:none;">
+            <span>反馈状态：<span id="fbStatusTag" class="fb-status-tag"></span></span>
+            <span style="color:#bbb;font-size:11px;">Ctrl+Enter 快速发送</span>
+        </div>
+        <!-- 聊天区域 -->
+        <div class="fb-chat-area" id="fbChatArea">
+            <div class="fb-empty">加载中...</div>
+        </div>
+        <!-- 关闭提示（反馈已关闭时显示） -->
+        <div class="fb-closed-tip" id="fbClosedTip" style="display:none;">该反馈已关闭，如需帮助请重新发起留言</div>
+        <!-- 输入区 -->
+        <div class="fb-input-row" id="fbInputRow">
+            <textarea id="fbInputText" placeholder="输入您的问题或反馈，客服将尽快回复..."></textarea>
+            <button class="btn-save" id="fbSendBtn" style="height:66px;padding:0 18px;">发送</button>
+        </div>
+    </div>
+</div>
+
+<!-- 修改个人信息弹窗 -->
+<div class="modal-mask" id="editInfoModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" data-modal="editInfoModal">×</button>
+        <div class="modal-title">修改个人信息</div>
+        <div class="form-msg" id="editInfoMsg"></div>
+        <div class="form-group">
+            <label>昵称（用户名）</label>
+            <input type="text" id="editUsername" placeholder="请输入昵称">
+        </div>
+        <div class="form-group">
+            <label>真实姓名</label>
+            <input type="text" id="editRealName" placeholder="请输入真实姓名（可选）">
+        </div>
+        <div class="form-group">
+            <label>手机号</label>
+            <input type="text" id="editPhone" placeholder="请输入11位手机号">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" data-modal="editInfoModal">取消</button>
+            <button class="btn-save" id="saveInfoBtn">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- 修改密码弹窗 -->
+<div class="modal-mask" id="changePwdModal">
+    <div class="modal-box">
+        <button class="modal-close-btn" data-modal="changePwdModal">×</button>
+        <div class="modal-title">修改密码</div>
+        <div class="form-msg" id="changePwdMsg"></div>
+        <div class="form-group">
+            <label>原密码</label>
+            <input type="password" id="oldPassword" placeholder="请输入原密码">
+        </div>
+        <div class="form-group">
+            <label>新密码</label>
+            <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）">
+        </div>
+        <div class="form-group">
+            <label>确认新密码</label>
+            <input type="password" id="confirmPassword" placeholder="请再次输入新密码">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" data-modal="changePwdModal">取消</button>
+            <button class="btn-save" id="savePwdBtn">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== 初始化 & 工具函数 =====
+    let currentUser = null;
+    let currentPage = 1;
+    let currentStatus = '';
+    const PAGE_SIZE = 8;
+
+    function getToken() {
+        try {
+            const u = JSON.parse(localStorage.getItem('loginUser') || '{}');
+            return u.token || '';
+        } catch { return ''; }
+    }
+
+    function authHeader() {
+        return { 'Authorization': 'Bearer ' + getToken() };
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return d.getFullYear() + '-'
+            + String(d.getMonth() + 1).padStart(2, '0') + '-'
+            + String(d.getDate()).padStart(2, '0') + ' '
+            + String(d.getHours()).padStart(2, '0') + ':'
+            + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    function getStatusLabel(s) {
+        const map = { 0:'待支付', 1:'已发货', 2:'已取消', 3:'已退款', 4:'待发货', 5:'已完成' };
+        return map[s] !== undefined ? map[s] : '未知';
+    }
+
+    function resolveAvatar(url) {
+        if (!url) return '../../images/avatar/default.png';
+        if (url.startsWith('/images/')) return '../../' + url.replace(/^\//, '');
+        if (url.startsWith('./images/')) return '../../' + url.replace('./', '');
+        if (url.startsWith('images/')) return '../../' + url;
+        return url;
+    }
+
+    // ===== 加载用户信息 =====
+    function loadUserInfo() {
+        $.ajax({
+            url: '/api/v1/user/info',
+            type: 'GET',
+            headers: authHeader(),
+            success: function(res) {
+                if (res.code === 200 && res.data) {
+                    currentUser = res.data;
+                    renderUserInfo(res.data);
+                } else {
+                    window.location.href = '../../index.html';
+                }
+            },
+            error: function() { window.location.href = '../../index.html'; }
+        });
+    }
+
+    function renderUserInfo(u) {
+        $('#avatarImg').attr('src', resolveAvatar(u.avatar));
+        $('#displayUsername').text(u.username || '-');
+        $('#infoUsername').text(u.username || '-');
+        $('#infoRealName').text(u.realName || '未填写');
+        $('#infoPhone').text(u.phone || '未填写');
+        $('#infoCreateTime').text(u.createTime ? formatDate(u.createTime) : '-');
+    }
+
+    // ===== 加载订单 =====
+    function loadOrders(page, status) {
+        const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
+        const userId = loginUser.userId;
+        if (!userId) return;
+
+        let url = '/api/v1/order/list?userId=' + userId + '&pageNum=' + page + '&pageSize=' + PAGE_SIZE;
+        if (status !== '') url += '&payStatus=' + status;
+
+        $('#orderTableBody').html('<tr><td colspan="6" class="no-orders">加载中...</td></tr>');
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: authHeader(),
+            success: function(res) {
+                if (res.code === 200 && res.data) {
+                    const data = res.data;
+                    const records = data.records || [];
+                    const total = data.total || 0;
+                    const pages = data.pages || 1;
+
+                    $('#orderTotal').text(total > 0 ? '（共 ' + total + ' 笔）' : '');
+                    renderOrderTable(records);
+                    renderPagination(page, pages, total);
+                } else {
+                    $('#orderTableBody').html('<tr><td colspan="6" class="no-orders">暂无订单记录</td></tr>');
+                }
+            },
+            error: function() {
+                $('#orderTableBody').html('<tr><td colspan="6" class="no-orders">加载失败，请刷新重试</td></tr>');
+            }
+        });
+    }
+
+    function renderOrderTable(records) {
+        if (!records.length) {
+            $('#orderTableBody').html('<tr><td colspan="6" class="no-orders">暂无订单记录</td></tr>');
+            return;
+        }
+        let html = '';
+        records.forEach(function(o) {
+            const typeLabel = o.orderType === 1 ? '线上' : '线下';
+            const safeOrderId = String(o.orderId).replace(/'/g, "\\'");
+            html += '<tr>'
+                + '<td style="font-size:12px;color:#666;">' + o.orderId + '</td>'
+                + '<td><strong style="color:#c00;">¥' + parseFloat(o.orderAmount).toFixed(2) + '</strong></td>'
+                + '<td>' + typeLabel + '</td>'
+                + '<td><span class="status-badge status-' + o.payStatus + '">' + getStatusLabel(o.payStatus) + '</span></td>'
+                + '<td>' + formatDate(o.createTime) + '</td>'
+                + '<td><button class="btn-fb" onclick="openFeedbackModal(\'' + safeOrderId + '\')">联系客服</button></td>'
+                + '</tr>';
+        });
+        $('#orderTableBody').html(html);
+    }
+
+    function renderPagination(current, pages, total) {
+        if (pages <= 1) { $('#orderPagination').html(''); return; }
+        let html = '<span class="page-info">共 ' + total + ' 条</span>';
+        html += '<button class="page-btn" id="prevPageBtn" ' + (current <= 1 ? 'disabled' : '') + '>上一页</button>';
+
+        const start = Math.max(1, current - 2);
+        const end = Math.min(pages, current + 2);
+        for (let i = start; i <= end; i++) {
+            html += '<button class="page-btn' + (i === current ? ' current' : '') + '" data-page="' + i + '">' + i + '</button>';
+        }
+        html += '<button class="page-btn" id="nextPageBtn" ' + (current >= pages ? 'disabled' : '') + '>下一页</button>';
+        $('#orderPagination').html(html);
+
+        // 绑定分页事件
+        $('#orderPagination .page-btn[data-page]').on('click', function() {
+            currentPage = parseInt($(this).data('page'));
+            loadOrders(currentPage, currentStatus);
+        });
+        $('#prevPageBtn').on('click', function() {
+            if (currentPage > 1) { currentPage--; loadOrders(currentPage, currentStatus); }
+        });
+        $('#nextPageBtn').on('click', function() {
+            if (currentPage < pages) { currentPage++; loadOrders(currentPage, currentStatus); }
+        });
+    }
+
+    // ===== 头像上传 =====
+    $('#avatarEditBtn').on('click', function() { $('#avatarFileInput').trigger('click'); });
+
+    $('#avatarFileInput').on('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { alert('图片大小不能超过2MB'); return; }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: '/api/v1/user/avatar/upload',
+            type: 'POST',
+            headers: authHeader(),
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if (res.code === 200) {
+                    const newUrl = res.data;
+                    $('#avatarImg').attr('src', resolveAvatar(newUrl));
+                    // 更新 localStorage
+                    const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
+                    loginUser.avatar = newUrl;
+                    localStorage.setItem('loginUser', JSON.stringify(loginUser));
+                    alert('头像更新成功');
+                } else {
+                    alert(res.msg || '上传失败');
+                }
+            },
+            error: function() { alert('上传失败，请重试'); }
+        });
+    });
+
+    // ===== 修改个人信息弹窗 =====
+    $('#editInfoBtn').on('click', function() {
+        if (!currentUser) return;
+        $('#editUsername').val(currentUser.username || '');
+        $('#editRealName').val(currentUser.realName || '');
+        $('#editPhone').val(currentUser.phone || '');
+        $('#editInfoMsg').text('').removeClass('error success');
+        $('#editInfoModal').addClass('show');
+    });
+
+    $('#saveInfoBtn').on('click', function() {
+        const username = $.trim($('#editUsername').val());
+        const realName = $.trim($('#editRealName').val());
+        const phone = $.trim($('#editPhone').val());
+
+        if (!username) { showFormMsg('editInfoMsg', '昵称不能为空', 'error'); return; }
+
+        const $btn = $(this).prop('disabled', true).text('保存中...');
+        $.ajax({
+            url: '/api/v1/user/update',
+            type: 'PUT',
+            headers: $.extend(authHeader(), { 'Content-Type': 'application/json' }),
+            data: JSON.stringify({ username: username, realName: realName, phone: phone }),
+            success: function(res) {
+                if (res.code === 200) {
+                    showFormMsg('editInfoMsg', '修改成功！', 'success');
+                    // 更新 localStorage 中的用户名
+                    const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
+                    loginUser.username = username;
+                    localStorage.setItem('loginUser', JSON.stringify(loginUser));
+                    // 刷新左侧显示
+                    if (res.data) {
+                        currentUser = res.data;
+                        renderUserInfo(res.data);
+                    } else {
+                        loadUserInfo();
+                    }
+                    setTimeout(function() { $('#editInfoModal').removeClass('show'); }, 800);
+                } else {
+                    showFormMsg('editInfoMsg', res.msg || '修改失败', 'error');
+                }
+            },
+            error: function() { showFormMsg('editInfoMsg', '请求失败，请重试', 'error'); },
+            complete: function() { $btn.prop('disabled', false).text('保存修改'); }
+        });
+    });
+
+    // ===== 修改密码弹窗 =====
+    $('#changePwdBtn').on('click', function() {
+        $('#oldPassword, #newPassword, #confirmPassword').val('');
+        $('#changePwdMsg').text('').removeClass('error success');
+        $('#changePwdModal').addClass('show');
+    });
+
+    $('#savePwdBtn').on('click', function() {
+        const oldPwd = $('#oldPassword').val();
+        const newPwd = $('#newPassword').val();
+        const confirmPwd = $('#confirmPassword').val();
+
+        if (!oldPwd) { showFormMsg('changePwdMsg', '请输入原密码', 'error'); return; }
+        if (!newPwd || newPwd.length < 6) { showFormMsg('changePwdMsg', '新密码至少6位', 'error'); return; }
+        if (newPwd !== confirmPwd) { showFormMsg('changePwdMsg', '两次密码输入不一致', 'error'); return; }
+
+        const $btn = $(this).prop('disabled', true).text('保存中...');
+        $.ajax({
+            url: '/api/v1/user/password',
+            type: 'PUT',
+            headers: $.extend(authHeader(), { 'Content-Type': 'application/json' }),
+            data: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }),
+            success: function(res) {
+                if (res.code === 200) {
+                    showFormMsg('changePwdMsg', '密码修改成功，请重新登录！', 'success');
+                    setTimeout(function() {
+                        localStorage.removeItem('loginUser');
+                        window.location.href = '../../index.html';
+                    }, 1500);
+                } else {
+                    showFormMsg('changePwdMsg', res.msg || '修改失败', 'error');
+                }
+            },
+            error: function() { showFormMsg('changePwdMsg', '请求失败，请重试', 'error'); },
+            complete: function() { $btn.prop('disabled', false).text('保存修改'); }
+        });
+    });
+
+    // ===== 关闭弹窗 =====
+    $(document).on('click', '.modal-close-btn, .btn-cancel', function() {
+        const modalId = $(this).data('modal');
+        if (modalId) $('#' + modalId).removeClass('show');
+    });
+    $(document).on('click', '.modal-mask', function(e) {
+        if (e.target === this) $(this).removeClass('show');
+    });
+
+    // ===== 订单状态筛选 =====
+    $('.status-tab').on('click', function() {
+        $('.status-tab').removeClass('active');
+        $(this).addClass('active');
+        currentStatus = $(this).data('status');
+        currentPage = 1;
+        loadOrders(currentPage, currentStatus);
+    });
+
+    // ===== 退出登录 =====
+    $('#logoutBtn').on('click', function() {
+        if (confirm('确定要退出登录吗？')) {
+            localStorage.removeItem('loginUser');
+            window.location.href = '../../index.html';
+        }
+    });
+
+    // ===== 工具：显示表单提示消息 =====
+    function showFormMsg(id, msg, type) {
+        $('#' + id).text(msg).removeClass('error success').addClass(type);
+    }
+
+    // ===== 反馈/客服弹窗 =====
+    let fbCurrentOrderId = null;   // 当前打开的订单号
+    let fbCurrentId = null;        // 当前反馈ID（null=尚无反馈）
+
+    function openFeedbackModal(orderId) {
+        fbCurrentOrderId = orderId;
+        fbCurrentId = null;
+        $('#fbOrderLabel').text('订单 ' + orderId);
+        $('#fbStatusBar').hide();
+        $('#fbChatArea').html('<div class="fb-empty">加载中...</div>');
+        $('#fbInputText').val('').prop('disabled', false);
+        $('#fbSendBtn').prop('disabled', false).text('发送');
+        $('#fbInputRow').show();
+        $('#fbClosedTip').hide();
+        $('#feedbackModal').addClass('show');
+        loadOrderFeedback(orderId);
+    }
+
+    function loadOrderFeedback(orderId) {
+        const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
+        $.ajax({
+            url: '/api/v1/feedback/order/' + encodeURIComponent(orderId) + '?userId=' + loginUser.userId,
+            type: 'GET',
+            headers: authHeader(),
+            success: function(res) {
+                if (res.code === 200 && res.data) {
+                    const fb = res.data.feedback;
+                    const replies = res.data.replies || [];
+                    fbCurrentId = fb.feedbackId;
+
+                    // 状态栏
+                    const statusMap = { 0: ['fb-s-0', '待回复'], 1: ['fb-s-1', '已回复'], 2: ['fb-s-2', '已关闭'] };
+                    const [cls, label] = statusMap[fb.status] || ['fb-s-0', '未知'];
+                    $('#fbStatusTag').attr('class', 'fb-status-tag ' + cls).text(label);
+                    $('#fbStatusBar').show();
+
+                    renderFbChat(fb, replies, loginUser.userId);
+
+                    if (fb.status === 2) {
+                        $('#fbInputRow').hide();
+                        $('#fbClosedTip').show();
+                    } else {
+                        $('#fbInputRow').show();
+                        $('#fbClosedTip').hide();
+                    }
+                } else {
+                    // 尚无反馈记录
+                    fbCurrentId = null;
+                    $('#fbChatArea').html('<div class="fb-empty">还没有留言记录，请在下方描述您的问题，客服将尽快处理</div>');
+                    $('#fbStatusBar').hide();
+                }
+            },
+            error: function() {
+                $('#fbChatArea').html('<div class="fb-empty">加载失败，请稍后重试</div>');
+            }
+        });
+    }
+
+    function renderFbChat(fb, replies, myUserId) {
+        let html = '';
+        // 第一条消息（反馈主体）—— 来自消费者
+        html += buildFbBubble(fb.content, fb.username || '我', fb.createTime, true);
+        // 后续回复
+        replies.forEach(function(r) {
+            const isMe = (r.replyUserId == myUserId);
+            html += buildFbBubble(r.content, isMe ? '我' : (r.replyUsername || '客服'), r.createTime, isMe);
+        });
+        const $area = $('#fbChatArea').html(html || '<div class="fb-empty">暂无消息</div>');
+        $area.scrollTop($area[0].scrollHeight);
+    }
+
+    function buildFbBubble(content, senderName, time, isMe) {
+        const side = isMe ? 'fb-msg-me' : 'fb-msg-staff';
+        const bubbleCls = isMe ? 'fb-bubble-me' : 'fb-bubble-staff';
+        const senderHtml = isMe ? '' : '<div class="fb-sender">' + escHtml(senderName) + '</div>';
+        return '<div class="fb-msg ' + side + '">'
+            + senderHtml
+            + '<div class="fb-bubble ' + bubbleCls + '">' + escHtml(content) + '</div>'
+            + '<div class="fb-msg-time">' + formatDate(time) + '</div>'
+            + '</div>';
+    }
+
+    function escHtml(s) {
+        return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function sendFeedbackMsg() {
+        const content = $.trim($('#fbInputText').val());
+        if (!content) { alert('请输入内容后再发送'); return; }
+        const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
+        const $btn = $('#fbSendBtn').prop('disabled', true).text('发送中...');
+
+        if (!fbCurrentId) {
+            // 首次提交：新建反馈
+            $.ajax({
+                url: '/api/v1/feedback/add',
+                type: 'POST',
+                headers: $.extend({}, authHeader(), { 'Content-Type': 'application/json' }),
+                data: JSON.stringify({
+                    userId: loginUser.userId,
+                    title: '订单咨询 ' + fbCurrentOrderId,
+                    content: content,
+                    orderId: fbCurrentOrderId
+                }),
+                success: function(res) {
+                    if (res.code === 200) {
+                        fbCurrentId = res.data.feedbackId;
+                        $('#fbInputText').val('');
+                        loadOrderFeedback(fbCurrentOrderId);
+                    } else {
+                        alert(res.msg || '发送失败');
+                    }
+                },
+                error: function() { alert('发送失败，请重试'); },
+                complete: function() { $btn.prop('disabled', false).text('发送'); }
+            });
+        } else {
+            // 追加留言：消费者回复
+            $.ajax({
+                url: '/api/v1/feedback/consumer-reply',
+                type: 'POST',
+                headers: $.extend({}, authHeader(), { 'Content-Type': 'application/json' }),
+                data: JSON.stringify({
+                    feedbackId: fbCurrentId,
+                    replyUserId: loginUser.userId,
+                    content: content
+                }),
+                success: function(res) {
+                    if (res.code === 200) {
+                        $('#fbInputText').val('');
+                        loadOrderFeedback(fbCurrentOrderId);
+                    } else {
+                        alert(res.msg || '发送失败');
+                    }
+                },
+                error: function() { alert('发送失败，请重试'); },
+                complete: function() { $btn.prop('disabled', false).text('发送'); }
+            });
+        }
+    }
+
+    $('#fbSendBtn').on('click', sendFeedbackMsg);
+
+    $('#fbInputText').on('keydown', function(e) {
+        if (e.ctrlKey && e.keyCode === 13) sendFeedbackMsg();
+    });
+
+    $('#fbCloseBtn').on('click', function() {
+        $('#feedbackModal').removeClass('show');
+    });
+
+    // 点击遮罩关闭反馈弹窗（但 modal-box 内点击不关闭）
+    $('#feedbackModal').on('click', function(e) {
+        if (e.target === this) $(this).removeClass('show');
+    });
+
+    // ===== 页面初始化 =====
+    $(function() {
+        var _u; try { _u = JSON.parse(localStorage.getItem('loginUser')||'{}'); } catch(e) { _u = {}; }
+        if (!_u.token || _u.roleId !== 2) { window.location.href = '../../index.html'; return; }
+        loadUserInfo();
+        loadOrders(1, '');
+    });
+</script>
+</body>
+</html>

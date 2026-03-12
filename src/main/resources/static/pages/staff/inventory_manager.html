@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五金产品销售管理系统 - 库存管理</title>
+    <link rel="icon" href="../../images/basic/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../../css/console.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>(function(){var u;try{u=JSON.parse(localStorage.getItem('loginUser')||'{}');}catch(e){u={};}if(!u.token||u.roleId!==1){window.location.href='../../index.html';}}());</script>
+    <style>
+        .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+        .modal-overlay.show{display:flex}
+        .modal{background:#fff;border-radius:12px;padding:28px;width:560px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+        .modal-title{font-size:18px;font-weight:700;margin:0 0 6px;color:#111827}
+        .modal-sub{color:#6b7280;font-size:13px;margin:0 0 18px}
+        .form-row{margin-bottom:14px}
+        .form-label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
+        .form-input{width:100%;height:38px;padding:0 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box}
+        .form-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+        .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .btn-cancel-modal{background:#f3f4f6;color:#374151}
+        .pagination{padding:16px;text-align:right}
+        .page-btn{min-width:34px;height:34px;padding:0 8px;border-radius:8px;border:1px solid #e5eaf3;background:#fff;cursor:pointer;font-size:13px;margin:0 2px}
+        .page-btn.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+        .page-btn:disabled{opacity:.5;cursor:not-allowed}
+        .loading-row td{text-align:center;color:#9ca3af;padding:40px}
+        /* 规格搜索下拉 */
+        .spec-wrap{position:relative}
+        .spec-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:180px;overflow-y:auto;z-index:20;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none}
+        .spec-opt{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f3f4f6}
+        .spec-opt:hover{background:#f0f9ff}
+        /* 明细卡片 */
+        .detail-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:10px;position:relative}
+        .detail-grid{display:grid;gap:10px}
+        .detail-grid-3{grid-template-columns:2fr 1fr 1fr}
+        .detail-grid-2{grid-template-columns:2fr 1fr}
+        .btn-rm{position:absolute;top:10px;right:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px}
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="sidebar">
+        <div class="brand">
+            <div class="brand-title">五金产品销售管理系统</div>
+            <div class="brand-sub">店员端</div>
+        </div>
+        <div class="nav">
+            <a href="staff_console.html" class="nav-item"><i class="fas fa-tachometer-alt nav-ico"></i><span class="nav-text">控制台首页</span></a>
+            <a href="product_manager.html" class="nav-item"><i class="fas fa-box nav-ico"></i><span class="nav-text">商品管理</span></a>
+            <a href="inventory_manager.html" class="nav-item active"><i class="fas fa-warehouse nav-ico"></i><span class="nav-text">库存管理</span></a>
+            <a href="order_manager.html" class="nav-item"><i class="fas fa-shopping-cart nav-ico"></i><span class="nav-text">订单管理</span></a>
+            <a href="feedback_manager.html" class="nav-item"><i class="fas fa-comments nav-ico"></i><span class="nav-text">反馈管理</span></a>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <h1 class="page-title">库存管理</h1>
+            <div class="topbar-right">
+                <div class="search"><input type="text" id="searchInput" placeholder="搜索商品名称、规格编码..."></div>
+                <a href="staff_profile.html" class="user-info" style="text-decoration:none;color:inherit;cursor:pointer;" title="个人信息">
+                    <span id="adminName" style="margin-right:10px;font-size:14px;">员工</span>
+                    <img id="adminAvatar" src="../../images/avatar/default.png" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                </a>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <div class="toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                    <div style="display:flex;gap:10px;">
+                        <button class="btn btn-primary" id="btnStockIn"><i class="fas fa-plus btn-ico"></i> 新增入库</button>
+                        <button class="btn" style="background:#ffe9ea;color:#d32f2f;" id="btnStockOut"><i class="fas fa-minus btn-ico"></i> 报损出库</button>
+                    </div>
+                    <div class="filter" style="flex-wrap:wrap;gap:8px;">
+                        <span>库存状态：</span>
+                        <select class="select" id="filterStatus">
+                            <option value="">全部状态</option>
+                            <option value="warning">库存预警</option>
+                            <option value="normal">正常库存</option>
+                            <option value="overstock">积压商品</option>
+                        </select>
+                        <span>分类：</span>
+                        <select class="select" id="filterCategory"><option value="">全部分类</option></select>
+                        <button class="btn btn-primary" id="btnSearch"><i class="fas fa-search"></i> 筛选</button>
+                        <button class="btn" style="background:#f3f4f6;color:#374151;" id="btnReset">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr>
+                            <th>规格编码</th><th>商品名称</th><th>材质</th>
+                            <th>规格/尺寸</th><th>单位</th><th>当前库存</th>
+                            <th>预警阈值</th><th>库存状态</th><th>操作</th>
+                        </tr></thead>
+                        <tbody id="inventoryTbody">
+                            <tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 入库弹窗 -->
+<div class="modal-overlay" id="modalIn">
+    <div class="modal">
+        <h3 class="modal-title"><i class="fas fa-plus-circle" style="color:#3b82f6;margin-right:8px;"></i>新增入库申请</h3>
+        <p class="modal-sub">店员提交后由店主审核，审核通过后库存自动更新</p>
+        <div id="inItems"></div>
+        <button class="btn" style="background:#f0f9ff;color:#2563eb;margin-bottom:14px;width:100%;" id="btnAddInRow">
+            <i class="fas fa-plus"></i> 添加商品行
+        </button>
+        <div class="form-row">
+            <label class="form-label">备注（可选）</label>
+            <input class="form-input" id="inRemark" placeholder="入库原因、供应商等">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel-modal" id="btnCancelIn">取消</button>
+            <button class="btn btn-primary" id="btnSubmitIn">提交入库申请</button>
+        </div>
+    </div>
+</div>
+
+<!-- 报损弹窗 -->
+<div class="modal-overlay" id="modalOut">
+    <div class="modal">
+        <h3 class="modal-title"><i class="fas fa-minus-circle" style="color:#d32f2f;margin-right:8px;"></i>报损出库申请</h3>
+        <p class="modal-sub">店员提交后由店主审核，审核通过后库存自动扣减</p>
+        <div id="outItems"></div>
+        <button class="btn" style="background:#fff1f2;color:#d32f2f;margin-bottom:14px;width:100%;" id="btnAddOutRow">
+            <i class="fas fa-plus"></i> 添加商品行
+        </button>
+        <div class="form-row">
+            <label class="form-label">损耗原因（可选）</label>
+            <input class="form-input" id="outRemark" placeholder="填写损耗原因">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel-modal" id="btnCancelOut">取消</button>
+            <button class="btn" style="background:#d32f2f;color:#fff;" id="btnSubmitOut">提交报损申请</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../js/jquery-3.7.1.min.js"></script>
+<script>
+var loginUser = {};
+try { loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}'); } catch(e) {}
+var TOKEN = loginUser.token || '';
+var curPage = 1, totalPages = 1;
+var inIdx = 0, outIdx = 0;
+
+function H() { return { 'Authorization': 'Bearer ' + TOKEN }; }
+
+// ---------- 初始化 ----------
+function loadUserInfo() {
+    $('#adminName').text(loginUser.username || '员工');
+    var av = loginUser.avatar || '';
+    if (av && av.startsWith('./')) av = av.replace('./', '../../');
+    if (av) $('#adminAvatar').attr('src', av);
+}
+
+function loadCategories() {
+    $.ajax({ url:'/api/v1/product/category/list', headers:H(),
+        success:function(r){
+            if(r.code!==200) return;
+            var $s=$('#filterCategory').html('<option value="">全部分类</option>');
+            (r.data||[]).forEach(function(t){
+                $s.append('<option value="'+t.categoryId+'">'+t.categoryName+'</option>');
+                (t.children||[]).forEach(function(c){
+                    $s.append('<option value="'+c.categoryId+'">&nbsp;&nbsp;'+c.categoryName+'</option>');
+                });
+            });
+        }
+    });
+}
+
+// ---------- 加载库存列表 ----------
+function loadInventory(page) {
+    curPage = page || 1;
+    var kw = $.trim($('#searchInput').val());
+    var catId = $('#filterCategory').val();
+    var st = $('#filterStatus').val();
+    var params = { pageNum: curPage, pageSize: 15 };
+    if (kw) params.keyword = kw;
+    if (catId) params.categoryId = catId;
+    if (st === 'warning') params.warnOnly = true;
+
+    $('#inventoryTbody').html('<tr class="loading-row"><td colspan="9"><i class="fas fa-spinner fa-spin"></i> 加载中...</td></tr>');
+    $.ajax({
+        url: '/api/v1/inventory/stock/list', type:'GET', headers:H(), data:params,
+        success: function(r) {
+            if (r.code !== 200) { showErr(r.msg); return; }
+            var recs = r.data.records || [];
+            totalPages = r.data.pages || 1;
+            // 客户端过滤 normal / overstock
+            if (st === 'overstock') {
+                recs = recs.filter(function(x){ return x.stockQuantity != null && x.warningThreshold != null && x.stockQuantity > x.warningThreshold * 3; });
+            } else if (st === 'normal') {
+                recs = recs.filter(function(x){ return !x.isWarning && !(x.stockQuantity > x.warningThreshold * 3); });
+            }
+            renderTable(recs, r.data.total || 0);
+            renderPage(r.data.total || 0);
+        },
+        error: function(){ showErr('加载失败，请检查网络'); }
+    });
+}
+
+function statusTag(r) {
+    if (r.isWarning) return '<span class="tag tag-wait" style="min-width:64px;">库存预警</span>';
+    if (r.stockQuantity != null && r.warningThreshold != null && r.stockQuantity > r.warningThreshold * 3)
+        return '<span class="tag" style="background:#f3f0ff;color:#7c3aed;min-width:64px;">积压商品</span>';
+    return '<span class="tag tag-on" style="min-width:64px;">正常库存</span>';
+}
+
+function renderTable(recs, total) {
+    if (!recs.length) {
+        $('#inventoryTbody').html('<tr class="loading-row"><td colspan="9" style="color:#9ca3af;">暂无数据</td></tr>');
+        return;
+    }
+    var h = '';
+    recs.forEach(function(r) {
+        var stockStyle = r.isWarning ? 'font-weight:700;color:#d32f2f;' : 'font-weight:600;';
+        h += '<tr>' +
+            '<td style="font-size:12px;color:#6b7280;">' + esc(r.specCode||'-') + '</td>' +
+            '<td style="font-weight:600;">' + esc(r.productName||'-') + '</td>' +
+            '<td>' + esc(r.material||'-') + '</td>' +
+            '<td>' + esc(r.size||'-') + '</td>' +
+            '<td>' + esc(r.unit||'-') + '</td>' +
+            '<td style="' + stockStyle + '">' + (r.stockQuantity!=null?r.stockQuantity:'-') + '</td>' +
+            '<td>' + (r.warningThreshold!=null?r.warningThreshold:'-') + '</td>' +
+            '<td>' + statusTag(r) + '</td>' +
+            '<td class="ops">' +
+                '<button class="btn btn-edit btnInRow" style="width:60px;" ' +
+                    'data-id="'+r.specId+'" data-code="'+esc(r.specCode||'')+'" data-name="'+esc(r.productName||'')+'">入库</button>' +
+                '<button class="btn btn-del btnOutRow" style="width:60px;" ' +
+                    'data-id="'+r.specId+'" data-code="'+esc(r.specCode||'')+'" data-name="'+esc(r.productName||'')+'">报损</button>' +
+            '</td></tr>';
+    });
+    $('#inventoryTbody').html(h);
+}
+
+function renderPage(total) {
+    var $p = $('#pagination');
+    if (totalPages <= 1) { $p.html('<span style="color:#6b7280;font-size:13px;">共 '+total+' 条</span>'); return; }
+    var h = '<span style="color:#6b7280;font-size:13px;margin-right:12px;">共 '+total+' 条</span>';
+    h += '<button class="page-btn" id="pgPrev"'+(curPage<=1?' disabled':'')+'>上一页</button>';
+    var s=Math.max(1,curPage-2), e=Math.min(totalPages,s+4);
+    if(e-s<4) s=Math.max(1,e-4);
+    for(var i=s;i<=e;i++) h+='<button class="page-btn'+(i===curPage?' active':'')+'" data-p="'+i+'">'+i+'</button>';
+    h+='<button class="page-btn" id="pgNext"'+(curPage>=totalPages?' disabled':'')+'>下一页</button>';
+    $p.html(h);
+}
+
+function showErr(msg) {
+    $('#inventoryTbody').html('<tr class="loading-row"><td colspan="9" style="color:#ef4444;">'+msg+'</td></tr>');
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---------- 规格搜索组件 ----------
+function buildSpecRow(container, mode, idx, preSpecId, preCode, preName) {
+    var label = mode==='in' ? '入库数量' : '报损数量';
+    var pricePart = mode==='in'
+        ? '<div><label class="form-label">采购单价 <span style="color:#ef4444;">*</span></label>'+
+          '<input class="form-input f-price" type="number" step="0.01" min="0" placeholder="元/单位"></div>'
+        : '';
+    var gridCls = mode==='in' ? 'detail-grid-3' : 'detail-grid-2';
+    var preVal = preCode ? (preCode + (preName ? ' - '+preName : '')) : '';
+    var html = '<div class="detail-card" id="'+mode+'Card'+idx+'">'+
+        '<button class="btn-rm" data-mode="'+mode+'" data-idx="'+idx+'">✕</button>'+
+        '<div class="detail-grid '+gridCls+'">'+
+        '<div><label class="form-label">商品规格 <span style="color:#ef4444;">*</span></label>'+
+        '<div class="spec-wrap">'+
+        '<input class="form-input f-spec-input" placeholder="输入编码或商品名搜索..." autocomplete="off" value="'+esc(preVal)+'">'+
+        '<input type="hidden" class="f-spec-id" value="'+(preSpecId||'')+'">'+
+        '<div class="spec-drop"></div>'+
+        '</div></div>'+
+        '<div><label class="form-label">'+label+' <span style="color:#ef4444;">*</span></label>'+
+        '<input class="form-input f-qty" type="number" min="1" placeholder="数量"></div>'+
+        pricePart+
+        '</div></div>';
+    $(container).append(html);
+    initSpecSearch($('#'+mode+'Card'+idx));
+}
+
+function initSpecSearch($card) {
+    var $inp = $card.find('.f-spec-input');
+    var $hid = $card.find('.f-spec-id');
+    var $drop = $card.find('.spec-drop');
+
+    $inp.on('input', function() {
+        $hid.val('');
+        var kw = $.trim($(this).val());
+        if (!kw) { $drop.hide().empty(); return; }
+        $.ajax({
+            url:'/api/v1/inventory/stock/list', type:'GET', headers:H(),
+            data:{ pageNum:1, pageSize:8, keyword:kw },
+            success:function(r) {
+                if(r.code!==200||!(r.data.records||[]).length){ $drop.hide().empty(); return; }
+                var h='';
+                r.data.records.forEach(function(x){
+                    h+='<div class="spec-opt" data-id="'+x.specId+'" data-code="'+esc(x.specCode||'')+'" data-name="'+esc(x.productName||'')+'">' +
+                        '<b>'+esc(x.specCode||'-')+'</b> — '+esc(x.productName||'-')+
+                        '<span style="color:#6b7280;font-size:12px;"> ('+esc(x.material||'')+' '+esc(x.size||'')+') 库存:'+x.stockQuantity+'</span>'+
+                        '</div>';
+                });
+                $drop.html(h).show();
+            }
+        });
+    });
+
+    $drop.on('click', '.spec-opt', function(){
+        $hid.val($(this).data('id'));
+        $inp.val($(this).data('code')+' — '+$(this).data('name'));
+        $drop.hide().empty();
+    });
+
+    $(document).on('click.specDrop', function(e){
+        if(!$(e.target).closest('.spec-wrap').length) $drop.hide();
+    });
+}
+
+// ---------- 提交入库 ----------
+function submitIn() {
+    var details = [], ok = true;
+    $('#inItems .detail-card').each(function() {
+        var specId = $(this).find('.f-spec-id').val();
+        var qty = parseInt($(this).find('.f-qty').val());
+        var price = parseFloat($(this).find('.f-price').val());
+        if (!specId) { alert('请在搜索结果中选择一个规格'); ok=false; return false; }
+        if (!qty || qty<1) { alert('请输入有效入库数量'); ok=false; return false; }
+        if (isNaN(price)||price<0) { alert('请输入有效采购单价'); ok=false; return false; }
+        details.push({ specId:parseInt(specId), inQuantity:qty, purchasePrice:price });
+    });
+    if (!ok || !details.length) { if(ok) alert('请至少添加一项'); return; }
+    $.ajax({
+        url:'/api/v1/inventory/in/add', type:'POST',
+        headers: Object.assign(H(),{'Content-Type':'application/json'}),
+        data: JSON.stringify({ operatorId:loginUser.userId||null, remark:$('#inRemark').val()||null, details:details }),
+        success: function(r) {
+            if(r.code===200){ alert(r.msg||'入库申请已提交！'); $('#modalIn').removeClass('show'); loadInventory(curPage); }
+            else alert('失败：'+r.msg);
+        },
+        error:function(){ alert('网络错误，请重试'); }
+    });
+}
+
+// ---------- 提交报损 ----------
+function submitOut() {
+    var details = [], ok = true;
+    $('#outItems .detail-card').each(function() {
+        var specId = $(this).find('.f-spec-id').val();
+        var qty = parseInt($(this).find('.f-qty').val());
+        if (!specId) { alert('请在搜索结果中选择一个规格'); ok=false; return false; }
+        if (!qty || qty<1) { alert('请输入有效报损数量'); ok=false; return false; }
+        details.push({ specId:parseInt(specId), outQuantity:qty, outPrice:0 });
+    });
+    if (!ok || !details.length) { if(ok) alert('请至少添加一项'); return; }
+    $.ajax({
+        url:'/api/v1/inventory/out/add', type:'POST',
+        headers: Object.assign(H(),{'Content-Type':'application/json'}),
+        data: JSON.stringify({ outType:2, operatorId:loginUser.userId||null, remark:$('#outRemark').val()||null, details:details }),
+        success: function(r) {
+            if(r.code===200){ alert(r.msg||'报损申请已提交！'); $('#modalOut').removeClass('show'); loadInventory(curPage); }
+            else alert('失败：'+r.msg);
+        },
+        error:function(){ alert('网络错误，请重试'); }
+    });
+}
+
+// ---------- 事件绑定 ----------
+$(function() {
+    loadUserInfo();
+    loadCategories();
+    loadInventory(1);
+
+    $('#searchInput').on('keypress', function(e){ if(e.which===13) loadInventory(1); });
+    $('#btnSearch').click(function(){ loadInventory(1); });
+    $('#btnReset').click(function(){ $('#searchInput,#filterCategory,#filterStatus').val(''); loadInventory(1); });
+
+    // 入库弹窗
+    $('#btnStockIn').click(function(){
+        $('#inItems').empty(); inIdx=0; $('#inRemark').val('');
+        buildSpecRow('#inItems','in',inIdx++);
+        $('#modalIn').addClass('show');
+    });
+    $('#btnAddInRow').click(function(){ buildSpecRow('#inItems','in',inIdx++); });
+    $('#inItems').on('click','.btn-rm',function(){
+        $('#inCard'+$(this).data('idx')).remove();
+    });
+    $('#btnCancelIn').click(function(){ $('#modalIn').removeClass('show'); });
+    $('#btnSubmitIn').click(submitIn);
+
+    // 报损弹窗
+    $('#btnStockOut').click(function(){
+        $('#outItems').empty(); outIdx=0; $('#outRemark').val('');
+        buildSpecRow('#outItems','out',outIdx++);
+        $('#modalOut').addClass('show');
+    });
+    $('#btnAddOutRow').click(function(){ buildSpecRow('#outItems','out',outIdx++); });
+    $('#outItems').on('click','.btn-rm',function(){
+        $('#outCard'+$(this).data('idx')).remove();
+    });
+    $('#btnCancelOut').click(function(){ $('#modalOut').removeClass('show'); });
+    $('#btnSubmitOut').click(submitOut);
+
+    // 行内快捷按钮
+    $('#inventoryTbody').on('click','.btnInRow',function(){
+        var id=$(this).data('id'), code=$(this).data('code'), name=$(this).data('name');
+        $('#inItems').empty(); inIdx=0; $('#inRemark').val('');
+        buildSpecRow('#inItems','in',inIdx++, id, code, name);
+        $('#modalIn').addClass('show');
+    });
+    $('#inventoryTbody').on('click','.btnOutRow',function(){
+        var id=$(this).data('id'), code=$(this).data('code'), name=$(this).data('name');
+        $('#outItems').empty(); outIdx=0; $('#outRemark').val('');
+        buildSpecRow('#outItems','out',outIdx++, id, code, name);
+        $('#modalOut').addClass('show');
+    });
+
+    // 分页
+    $('#pagination').on('click','.page-btn',function(){
+        if($(this).prop('disabled')) return;
+        var id=$(this).attr('id');
+        if(id==='pgPrev') loadInventory(curPage-1);
+        else if(id==='pgNext') loadInventory(curPage+1);
+        else loadInventory(parseInt($(this).data('p')));
+    });
+
+    // 遮罩关闭
+    $('.modal-overlay').click(function(e){
+        if($(e.target).hasClass('modal-overlay')) $(this).removeClass('show');
+    });
+});
+</script>
+</body>
+</html>
